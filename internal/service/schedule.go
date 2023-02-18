@@ -72,6 +72,7 @@ func (s *schedService) RegisterSchedule(sched *model.Schedule) error {
 	sched.ID = id
 	sched.CreatedAt = dtoSched.CreatedAt
 	sched.Status = getStatus(dtoSched.Active)
+	sched.NextScheduleAt = dtoSched.NextScheduleAt
 
 	s.runCallbacks(sched, s.onScheduleRegistered)
 
@@ -161,7 +162,7 @@ func (s *schedService) notify(ctx context.Context, sched *model.Schedule, i int,
 }
 
 const (
-	MaxFailures = 1
+	MaxFailures = 10
 )
 
 func (s *schedService) planNextSchedule(tx *sql.Tx, succeeded, failed []*dto.Schedule) ([]*dto.Schedule, error) {
