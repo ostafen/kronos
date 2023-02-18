@@ -5,7 +5,7 @@ import (
 )
 
 type ScheduleCreateRequest struct {
-	Name        string            `json:"name" validate:"required"`
+	Title       string            `json:"title" validate:"required"`
 	Description string            `json:"description"`
 	CronExpr    string            `json:"cronExpr" validate:"required"`
 	Email       string            `json:"email" validate:"required"`
@@ -15,7 +15,7 @@ type ScheduleCreateRequest struct {
 
 func (r *ScheduleCreateRequest) ToSched() *model.Schedule {
 	return &model.Schedule{
-		Title:       r.Name,
+		Title:       r.Title,
 		Description: r.Description,
 		CronExpr:    r.CronExpr,
 		Email:       r.Email,

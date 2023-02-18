@@ -1,0 +1,46 @@
+# Kronos
+
+Kronos allows you to periodically invoke your webhooks using cron expressions.
+
+## Features:
+
+- Easy to use REST API to schedule your webhooks;
+- Complex scheduling using cron expressions;
+- Get email notification on repeated failures.
+
+# Registering a periodic schedule
+To start getting some webhook notifications, let's add a new schedule which will be notified every minute:
+```bash
+curl -X POST localhost:8080/schedules -H 'Content-Type: application/json' -d \
+'{
+    "title": "sample-schedule",
+    "description": "a sample schedule description",
+    "cronExpr": "0/1 * * * *",
+    "email": "your-notification-email",
+    "url": "your-webhook-address"
+}'
+```
+On success, the response of the server will be similar to the following:
+```json
+{
+    "id": "1e6d146b-e3b7-4e5c-b7ce-b7b2860f461b",
+    "title": "sample-schedule",
+    "status": "active",
+    "description": "a sample schedule description",
+    "cronExpr": "0/1 * * * *",
+    "email": "your-notification-email",
+    "url": "your-webhook-address",
+    "metadata": null,
+    "createdAt": "2023-02-18T09:38:08.72077066Z",
+    "nextScheduleAt": "0001-01-01T00:00:00Z"
+}
+```
+
+## REST API
+
+- **POST** `/schedules` - Register a new schedule
+- **GET** `/schedules/{id}` - Get details about an already existing schedule
+- **DELETE** `/schedules/{id}` - Delete a schedule
+- **POST** `/schedules/{id}/pause` - Pause an active schedule
+- **POST** `/schedules/{id}/resume` - Resume a paused schedule
+- **POST** `/schedules/{id}/trigger` - Immediately trigger a notification for a given schedule
