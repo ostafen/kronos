@@ -8,10 +8,29 @@ Kronos allows you to periodically invoke your webhooks using cron expressions.
 - Complex scheduling using cron expressions;
 - Get email notification on repeated failures.
 
+# Sample configuration
+
+```yaml
+service:
+  logging:
+    level: INFO
+    format: JSON
+  alert:
+    email:
+      server: smtp-server-address:port
+      address: yuor-email-address
+      password: your-email-password # if you use gmail with 2FA enabled, you can use app password
+
+  port: 9175
+
+store:
+  driver: sqlite3
+```
+
 # Registering a periodic schedule
 To start getting some webhook notifications, let's add a new schedule which will be notified every minute:
 ```bash
-curl -X POST localhost:8080/schedules -H 'Content-Type: application/json' -d \
+curl -X POST localhost:9175/schedules -H 'Content-Type: application/json' -d \
 '{
     "title": "sample-schedule",
     "description": "a sample schedule description",
