@@ -328,7 +328,7 @@ func (s *schedService) TriggerSchedule(id string) (*model.Schedule, error) {
 		return nil, err
 	}
 
-	err = s.notificationSvc.Send(context.Background(), sched.URL, &dto.ScheduleNotification{ScheduleID: sched.ID})
+	err = s.notificationSvc.Send(context.Background(), sched.URL, sched)
 	return fromDTOSchedule(sched), err
 }
 

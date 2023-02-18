@@ -34,22 +34,3 @@ type Schedule struct {
 	CreatedAt      time.Time
 	Failures       int
 }
-
-type ScheduleNotification struct {
-	ScheduleID string `json:"scheduleId"`
-}
-
-type ScheduleStatus string
-
-const (
-	ScheduleStatusNotified ScheduleStatus = "NOTIFIED"
-	ScheduleStatusFailed   ScheduleStatus = "FAILED"
-)
-
-type ScheduleHistoryItem struct {
-	ScheduleID  string
-	EndpointID  int
-	ScheduledAt time.Time
-	NotifiedAt  time.Time
-	Status      ScheduleStatus
-}
