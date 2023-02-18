@@ -8,6 +8,15 @@ Kronos allows you to periodically invoke your webhooks using cron expressions.
 - Complex scheduling using cron expressions;
 - Get email notification on repeated failures.
 
+## Build (Go 1.9+)
+
+Run the following command
+
+```bash
+foo@bar$ make build
+```
+to build an executable which will be output to the `bin` subfolder.
+
 # Sample configuration
 
 ```yaml

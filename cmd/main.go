@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/ostafen/kronos/internal/api"
@@ -17,12 +18,31 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	version   string
+	commit    string = "none"
+	buildTime string = time.Now().Format(time.UnixDate)
+)
+
+func getVersion() string {
+	if version == "" {
+		return pseudoVersion()
+	}
+	return version
+}
+
+func pseudoVersion() string {
+	return fmt.Sprintf("v0.0.0-%s-%s", time.Now().Format("20060102150405"), commit)
+}
+
 func printLogo() {
-	fmt.Println(`| | ___ __ ___  _ __   ___  ___`)
-	fmt.Println(`| |/ / '__/ _ \| '_ \ / _ \/ __|`)
-	fmt.Println(`|   <| | | (_) | | | | (_) \__ \`)
-	fmt.Println(`|_|\_\_|  \___/|_| |_|\___/|___/`)
-	fmt.Println()
+	fmt.Println("| | ___ __ ___  _ __   ___  ___")
+	fmt.Println("| |/ / '__/ _ \\| '_ \\ / _ \\/ __|")
+	fmt.Println("|   <| | | (_) | | | | (_) \\__ \\")
+	fmt.Println("|_|\\_\\_|  \\___/|_| |_|\\___/|___/")
+	fmt.Printf("Version: %s\n", getVersion())
+	fmt.Printf("Commit: %s\n", commit)
+	fmt.Printf("Build.Time: %s\n\n", buildTime)
 }
 
 func main() {
