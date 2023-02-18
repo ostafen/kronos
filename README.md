@@ -11,17 +11,16 @@ Kronos allows you to periodically invoke your webhooks using cron expressions.
 # Sample configuration
 
 ```yaml
-service:
-  logging:
-    level: INFO
-    format: JSON
-  alert:
-    email:
-      server: smtp-server-address:port
-      address: yuor-email-address
-      password: your-email-password # if you use gmail with 2FA enabled, you can use app password
+logging:
+  level: INFO
+  format: JSON
+alert:
+  email:
+    server: smtp-server-address:port
+    address: yuor-email-address
+    password: your-email-password # if you use gmail with 2FA enabled, you can use app password
 
-  port: 9175
+port: 9175
 
 store:
   driver: sqlite3 # currently, the only driver supported
