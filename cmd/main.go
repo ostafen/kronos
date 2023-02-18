@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -48,12 +47,7 @@ func printLogo() {
 func main() {
 	printLogo()
 
-	if len(os.Args) < 2 {
-		log.Fatal("no config provided")
-		os.Exit(1)
-	}
-
-	conf, err := config.Parse(os.Args[1])
+	conf, err := config.Read()
 	if err != nil {
 		log.Fatal(err)
 	}

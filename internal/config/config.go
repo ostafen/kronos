@@ -1,8 +1,10 @@
 package config
 
 import (
+	"os"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 )
 
@@ -21,9 +23,9 @@ type Log struct {
 }
 
 type Email struct {
-	Server   string
-	Address  string
-	Password string
+	Server   string `mapstructure:"server"`
+	Address  string `mapstructure:"address"`
+	Password string `mapstructure:"password"`
 }
 
 type Alert struct {
@@ -37,19 +39,62 @@ type Config struct {
 	Store   Store `mapstructure:"store"`
 }
 
-func Parse(filename string) (*Config, error) {
-	viper.SetConfigFile(filename)
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
+func viperDefaults() {
+	viper.SetDefault("port", 9175)
+	viper.SetDefault("store.driver", "sqlite3")
+}
 
-	if err := viper.ReadInConfig(); err != nil {
-		return nil, err
+func envKeys(m map[string]any) []string {
+	keys := make([]string, 0)
+	for k, v := range m {
+		prefix := k
+
+		if vm, isMap := v.(map[string]any); isMap {
+			subkeys := envKeys(vm)
+			for _, sk := range subkeys {
+				keys = append(keys, prefix+"."+sk)
+			}
+		} else {
+			keys = append(keys, prefix)
+		}
+	}
+	return keys
+}
+
+func bindEnv(v any) error {
+	envKeysMap := map[string]any{}
+	if err := mapstructure.Decode(v, &envKeysMap); err != nil {
+		return err
+	}
+
+	keys := envKeys(envKeysMap)
+	for _, key := range keys {
+		if err := viper.BindEnv(key); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func Read() (*Config, error) {
+	viperDefaults()
+
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	if len(os.Args) > 1 {
+		viper.SetConfigFile(os.Args[1])
+
+		if err := viper.ReadInConfig(); err != nil {
+			return nil, err
+		}
 	}
 
 	var c Config
+	if err := bindEnv(c); err != nil {
+		return nil, err
+	}
 	if err := viper.Unmarshal(&c); err != nil {
 		return nil, err
 	}
-
 	return &c, nil
 }
