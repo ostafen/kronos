@@ -24,7 +24,7 @@ service:
   port: 9175
 
 store:
-  driver: sqlite3
+  driver: sqlite3 # currently, the only driver supported
 ```
 
 # Registering a periodic schedule

@@ -38,7 +38,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	setupLogging(conf.Service.Logging)
+	setupLogging(conf.Logging)
 
 	dbConn, err := db.Open(conf.Store)
 	if err != nil {
@@ -52,7 +52,7 @@ func main() {
 
 	schedRepo := db.GetScheduleRepo(dbConn)
 	schedSvc := service.NewScheduleService(dbConn, schedRepo, service.NewNotificationService())
-	alertSvc := service.NewAlertService(conf.Service.Alert.Email)
+	alertSvc := service.NewAlertService(conf.Alert.Email)
 
 	trigger := notification.NewScheduleTrigger(schedSvc)
 
@@ -74,7 +74,7 @@ func main() {
 
 	configureRouter(schedSvc)
 
-	http.ListenAndServe(fmt.Sprintf(":%d", conf.Service.Port), nil)
+	http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil)
 }
 
 func setupLogging(config config.Log) {

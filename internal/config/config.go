@@ -1,23 +1,23 @@
 package config
 
 import (
-	"os"
+	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/spf13/viper"
 )
 
 type Store struct {
-	Driver   string `yaml:"driver" default:"sqlite"`
-	Host     string `yaml:"host"`
-	Port     int64  `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	DB       string `yaml:"db" default:"kronos"`
+	Driver   string `mapstructure:"driver" default:"sqlite"`
+	Host     string `mapstructure:"host"`
+	Port     int64  `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	DB       string `mapstructure:"db" default:"kronos"`
 }
 
 type Log struct {
-	Level  string `yaml:"level"`
-	Format string `yaml:"format"`
+	Level  string `mapstructure:"level"`
+	Format string `mapstructure:"format"`
 }
 
 type Email struct {
@@ -27,29 +27,27 @@ type Email struct {
 }
 
 type Alert struct {
-	Email Email `yaml:"email"`
-}
-
-type Service struct {
-	Port    int64 `yaml:"port"`
-	Alert   Alert `yaml:"alert"`
-	Logging Log   `yaml:"logging"`
+	Email Email `mapstructure:"email"`
 }
 
 type Config struct {
-	Service Service `yaml:"service"`
-	Store   Store   `yaml:"store"`
+	Port    int64 `mapstructure:"port"`
+	Alert   Alert `mapstructure:"alert"`
+	Logging Log   `mapstructure:"logging"`
+	Store   Store `mapstructure:"store"`
 }
 
 func Parse(filename string) (*Config, error) {
-	var c Config
+	viper.SetConfigFile(filename)
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AutomaticEnv()
 
-	data, err := os.ReadFile(filename)
-	if err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		return nil, err
 	}
 
-	if err := yaml.Unmarshal(data, &c); err != nil {
+	var c Config
+	if err := viper.Unmarshal(&c); err != nil {
 		return nil, err
 	}
 
