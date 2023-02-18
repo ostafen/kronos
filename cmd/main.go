@@ -58,6 +58,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer dbConn.Close()
 
 	m := db.NewMigrator(dbConn)
 	if err := m.Migrate(); err != nil {

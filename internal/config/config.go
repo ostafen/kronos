@@ -39,46 +39,8 @@ type Config struct {
 	Store   Store `mapstructure:"store"`
 }
 
-func viperDefaults() {
-	viper.SetDefault("port", 9175)
-	viper.SetDefault("store.driver", "sqlite3")
-}
-
-func envKeys(m map[string]any) []string {
-	keys := make([]string, 0)
-	for k, v := range m {
-		prefix := k
-
-		if vm, isMap := v.(map[string]any); isMap {
-			subkeys := envKeys(vm)
-			for _, sk := range subkeys {
-				keys = append(keys, prefix+"."+sk)
-			}
-		} else {
-			keys = append(keys, prefix)
-		}
-	}
-	return keys
-}
-
-func bindEnv(v any) error {
-	envKeysMap := map[string]any{}
-	if err := mapstructure.Decode(v, &envKeysMap); err != nil {
-		return err
-	}
-
-	keys := envKeys(envKeysMap)
-	for _, key := range keys {
-		if err := viper.BindEnv(key); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func Read() (*Config, error) {
 	viperDefaults()
-
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	if len(os.Args) > 1 {
@@ -97,4 +59,41 @@ func Read() (*Config, error) {
 		return nil, err
 	}
 	return &c, nil
+}
+
+func viperDefaults() {
+	viper.SetDefault("port", 9175)
+	viper.SetDefault("store.driver", "sqlite3")
+}
+
+func bindEnv(v any) error {
+	envKeysMap := map[string]any{}
+	if err := mapstructure.Decode(v, &envKeysMap); err != nil {
+		return err
+	}
+
+	keys := envKeys(envKeysMap)
+	for _, key := range keys {
+		if err := viper.BindEnv(key); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func envKeys(m map[string]any) []string {
+	keys := make([]string, 0)
+	for k, v := range m {
+		prefix := k
+
+		if vm, isMap := v.(map[string]any); isMap {
+			subkeys := envKeys(vm)
+			for _, sk := range subkeys {
+				keys = append(keys, prefix+"."+sk)
+			}
+		} else {
+			keys = append(keys, prefix)
+		}
+	}
+	return keys
 }

@@ -9,7 +9,7 @@ COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
 COPY . .
-RUN go build -ldflags "-X main.version=$VERSION -X main.commit=$COMMIT -X 'main.buildTime=$BUILD_TIME'" -buildvcs=false -o /kronos cmd/main.go
+RUN go build -a -installsuffix cgo -ldflags "-w -s -X main.version=$VERSION -X main.commit=$COMMIT -X 'main.buildTime=$BUILD_TIME'" -buildvcs=false -o /kronos cmd/main.go
 
 FROM gcr.io/distroless/base-debian10
 WORKDIR /

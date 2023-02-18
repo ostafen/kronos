@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/ostafen/kronos/internal/config"
 )
 
