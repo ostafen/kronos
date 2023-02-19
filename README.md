@@ -4,9 +4,9 @@ Kronos allows you to periodically invoke your webhooks using cron expressions.
 
 ## Features:
 
-- Easy to use REST API to schedule your webhooks;
-- Complex scheduling using cron expressions;
-- Get email notification on repeated failures.
+- :zap: Easy to use REST API to schedule your webhooks;
+- :alarm_clock: Complex scheduling using cron expressions;
+- :mailbox_with_mail: Get email notification on repeated failures.
 
 ## Build (Go 1.9+)
 
