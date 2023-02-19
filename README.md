@@ -59,7 +59,10 @@ curl -X POST localhost:9175/schedules -H 'Content-Type: application/json' -d \
     "description": "a sample schedule description",
     "cronExpr": "0/1 * * * *",
     "email": "your-notification-email",
-    "url": "your-webhook-address"
+    "url": "your-webhook-address",
+    "isRecurring": true,
+    "startAt": "2023-02-19T11:34:00Z",
+    "endAt": "2023-02-19T11:38:00Z"
 }'
 ```
 On success, the response of the server will be similar to the following:
@@ -67,14 +70,18 @@ On success, the response of the server will be similar to the following:
 {
     "id": "1e6d146b-e3b7-4e5c-b7ce-b7b2860f461b",
     "title": "sample-schedule",
-    "status": "active",
+    "status": "not_started",
     "description": "a sample schedule description",
     "cronExpr": "0/1 * * * *",
     "email": "your-notification-email",
     "url": "your-webhook-address",
     "metadata": null,
-    "createdAt": "2023-02-18T09:38:08.72077066Z",
-    "nextScheduleAt": "0001-01-01T00:00:00Z"
+    "isRecurring": true,
+    "createdAt": "2023-02-19T12:32:30.788562107+01:00",
+    "runAt": "0001-01-01T00:00:00Z",
+    "startAt": "2023-02-19T11:34:00Z",
+    "endAt": "2023-02-19T11:38:00Z",
+    "nextScheduleAt": "2023-02-19T11:34:00Z",
 }
 ```
 
