@@ -17,7 +17,7 @@ foo@bar$ make build
 ```
 to build an executable which will be output to the `bin` subfolder.
 
-# Yaml file configuration
+## Yaml file configuration
 
 ```yaml
 logging:
@@ -35,7 +35,7 @@ store:
   driver: sqlite3 # currently, the only driver supported
 ```
 
-# Docker compose configuration
+## Docker compose configuration
 
 ```yaml
 services:
@@ -50,7 +50,7 @@ services:
       - ./data:/data
 ```
 
-# Registering a periodic schedule
+## Registering a periodic schedule
 To start getting some webhook notifications, let's add a new schedule which will be notified every minute:
 ```bash
 curl -X POST localhost:9175/schedules -H 'Content-Type: application/json' -d \
