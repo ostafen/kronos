@@ -14,5 +14,4 @@ RUN go build -a -installsuffix cgo -ldflags "-w -s -X main.version=$VERSION -X m
 FROM gcr.io/distroless/base-debian10
 WORKDIR /
 COPY --from=build /kronos /kronos
-USER nonroot:nonroot
 ENTRYPOINT ["/kronos"]
