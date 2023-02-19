@@ -35,6 +35,21 @@ store:
   driver: sqlite3 # currently, the only driver supported
 ```
 
+# Docker image
+
+```yaml
+services:
+  kronos:
+    image: ghcr.io/ostafen/kronos
+    ports:
+      - '9175:9175'
+    environment:
+      - PORT=9175 # each property is also exposed through an environment variable
+      - STORE_HOST=/data/kronos.sqlite
+    volumes:
+      - ./data:/data
+```
+
 # Registering a periodic schedule
 To start getting some webhook notifications, let's add a new schedule which will be notified every minute:
 ```bash
