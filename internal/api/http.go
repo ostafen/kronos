@@ -2,12 +2,11 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
-	"github.com/adhocore/gronx"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/ostafen/kronos/internal/model"
 	"github.com/ostafen/kronos/internal/service"
 )
 
@@ -22,28 +21,21 @@ func NewScheduleApi(svc service.ScheduleService) *ScheduleApi {
 }
 
 func (api *ScheduleApi) RegisterSchedule(w http.ResponseWriter, r *http.Request) {
-	var schedReq ScheduleCreateRequest
+	var input model.ScheduleRegisterInput
 
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&schedReq); err != nil {
+	if err := decoder.Decode(&input); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	v := validator.New()
-	if err := v.Struct(schedReq); err != nil {
+	if err := v.Struct(input); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	gron := gronx.New()
-	if !gron.IsValid(schedReq.CronExpr) {
-		http.Error(w, fmt.Sprintf("invalid chron expr %s", schedReq.CronExpr), http.StatusBadRequest)
-		return
-	}
-
-	sched := schedReq.ToSched()
-	err := api.svc.RegisterSchedule(sched)
+	sched, err := api.svc.RegisterSchedule(&input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

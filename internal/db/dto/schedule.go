@@ -29,8 +29,11 @@ type Schedule struct {
 	CronExpr       string
 	URL            string
 	Email          string
+	IsRecurring    bool
 	Metadata       Metadata
-	NextScheduleAt time.Time
 	CreatedAt      time.Time
+	NextScheduleAt time.Time
+	StartAt        time.Time
+	EndAt          time.Time
 	Failures       int
 }

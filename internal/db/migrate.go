@@ -38,7 +38,10 @@ func (m *Migrator) createSchedulesTable(tx *sql.Tx) error {
 		url TEXT NOT NULL,
 		cron_expr VARCHAR(100) NOT NULL,
 		email VARCHAR(100) NOT NULL,
+		is_recurring BOOL NOT NULL,
 		created_at TIMESTAMP NOT NULL,
+		start_at TIMESTAMP NOT NULL,
+		end_at TIMESTAMP NOT NULL,
 		next_schedule_at TIMESTAMP NOT NULL,
 		failures INT NOT NULL DEFAULT 0,
 		metadata BLOB NOT NULL

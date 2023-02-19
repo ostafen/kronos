@@ -39,8 +39,11 @@ func (repo *sqliteJobRepo) Insert(sched *dto.Schedule) (string, error) {
 		&sched.URL,
 		&sched.CronExpr,
 		&sched.Email,
+		&sched.IsRecurring,
 		&sched.CreatedAt,
 		&sched.NextScheduleAt,
+		&sched.StartAt,
+		&sched.EndAt,
 		&sched.Metadata,
 		&sched.Failures,
 	)
@@ -90,8 +93,11 @@ func ScanSchedule[R Row](row R) (*dto.Schedule, error) {
 		&sched.URL,
 		&sched.CronExpr,
 		&sched.Email,
+		&sched.IsRecurring,
 		&sched.CreatedAt,
 		&sched.NextScheduleAt,
+		&sched.StartAt,
+		&sched.EndAt,
 		&sched.Metadata,
 		&sched.Failures,
 	)
@@ -107,7 +113,7 @@ func (repo *sqliteJobRepo) PickPending(tx *sql.Tx, limit int) ([]*dto.Schedule, 
 		schedTableNextScheduleAtCol,
 	)
 
-	rows, err := tx.Query(query, true, time.Now(), limit)
+	rows, err := tx.Query(query, true, time.Now().UTC(), limit)
 	if err != nil {
 		return nil, err
 	}
@@ -141,15 +147,25 @@ func (repo *sqliteJobRepo) Delete(tx *sql.Tx, id string) error {
 	return err
 }
 
-func (repo *sqliteJobRepo) UpdateScheduleTimeAndFailures(tx *sql.Tx, id string, schedTime time.Time, failures int) error {
-	stmt := fmt.Sprintf(`UPDATE %s SET %s = $1, %s = $2 WHERE %s = $3`,
+func (repo *sqliteJobRepo) UpdateScheduleTime(tx *sql.Tx, id string, schedTime time.Time) error {
+	stmt := fmt.Sprintf(`UPDATE %s SET %s = $1 WHERE %s = $2`,
 		schedTableName,
 		schedTableNextScheduleAtCol,
+		schedTableIdCol,
+	)
+
+	_, err := tx.Exec(stmt, schedTime, id)
+	return err
+}
+
+func (repo *sqliteJobRepo) UpdateFailures(tx *sql.Tx, id string, failures int) error {
+	stmt := fmt.Sprintf(`UPDATE %s SET %s = $1 WHERE %s = $2`,
+		schedTableName,
 		schedTableFailuresCol,
 		schedTableIdCol,
 	)
 
-	_, err := tx.Exec(stmt, schedTime, failures, id)
+	_, err := tx.Exec(stmt, failures, id)
 	return err
 }
 

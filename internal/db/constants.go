@@ -20,6 +20,9 @@ const (
 	schedTableCreatedAtCol      = "created_at"
 	schedTableMetadataCol       = "metadata"
 	schedTableFailuresCol       = "failures"
+	schedTableIsRecurringCol    = "is_recurring"
+	schedTableStartAtCol        = "start_at"
+	schedTableEndAtCol          = "end_at"
 )
 
 var schedTableCols = []string{
@@ -30,8 +33,11 @@ var schedTableCols = []string{
 	schedTableUrlCol,
 	schedTableCronExprCol,
 	schedTableEmailCol,
+	schedTableIsRecurringCol,
 	schedTableCreatedAtCol,
 	schedTableNextScheduleAtCol,
+	schedTableStartAtCol,
+	schedTableEndAtCol,
 	schedTableMetadataCol,
 	schedTableFailuresCol,
 }

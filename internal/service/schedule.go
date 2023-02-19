@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/ostafen/kronos/internal/cron"
 	"github.com/ostafen/kronos/internal/db"
 	"github.com/ostafen/kronos/internal/db/dto"
 	"github.com/ostafen/kronos/internal/model"
@@ -15,7 +15,7 @@ import (
 )
 
 type ScheduleService interface {
-	RegisterSchedule(sched *model.Schedule) error
+	RegisterSchedule(sched *model.ScheduleRegisterInput) (*model.Schedule, error)
 	GetSchedule(id string) (*model.Schedule, error)
 	DeleteSchedule(id string) error
 	ListSchedules(offset, limit int) ([]*model.Schedule, error)
@@ -50,33 +50,22 @@ type schedService struct {
 	onSchedulePaused     []ScheduleCallback
 }
 
-func (s *schedService) RegisterSchedule(sched *model.Schedule) error {
-	dtoSched := &dto.Schedule{
-		ID:             uuid.NewString(),
-		Active:         true,
-		Title:          sched.Title,
-		Description:    sched.Description,
-		Email:          sched.Email,
-		URL:            sched.URL,
-		CronExpr:       sched.CronExpr,
-		Metadata:       sched.Metadata,
-		NextScheduleAt: sched.FirstSchedule(),
-		CreatedAt:      time.Now().UTC(),
-	}
-
-	id, err := s.schedRepo.Insert(dtoSched)
+func (s *schedService) RegisterSchedule(input *model.ScheduleRegisterInput) (*model.Schedule, error) {
+	dtoSched, err := input.ToSched()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	sched.ID = id
-	sched.CreatedAt = dtoSched.CreatedAt
-	sched.Status = getStatus(dtoSched.Active)
-	sched.NextScheduleAt = dtoSched.NextScheduleAt
+	_, err = s.schedRepo.Insert(dtoSched)
+	if err != nil {
+		return nil, err
+	}
+
+	sched := fromDTOSchedule(dtoSched)
 
 	s.runCallbacks(sched, s.onScheduleRegistered)
 
-	return nil
+	return sched, nil
 }
 
 const (
@@ -107,19 +96,46 @@ func (s *schedService) NotifySchedules() (*time.Time, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), MaxRequestDuration)
 	defer cancel()
 
-	succeeded, failed := s.nofifyAll(ctx, schedules)
-	paused, err := s.planNextSchedule(tx, succeeded, failed)
+	succeededSchedules, failedSchedules := s.nofifyAll(ctx, schedules)
+	pausedSchedules, failedSchedules, err := s.pauseOrIncrementFailures(tx, failedSchedules)
 	if err != nil {
+		return nil, err
+	}
+
+	activeSchedules := concat(succeededSchedules, failedSchedules)
+	if err := s.planNextSchedule(tx, activeSchedules); err != nil {
+		return nil, err
+	}
+
+	if err := s.disableElapsedSchedules(tx, activeSchedules); err != nil {
 		return nil, err
 	}
 
 	err = tx.Commit()
 	if err == nil {
-		s.notifyPausedSchedules(paused...)
+		s.notifyPausedSchedules(pausedSchedules...)
 	}
 
 	now := time.Now()
 	return &now, err
+}
+
+func concat[T any](a []T, b []T) []T {
+	res := make([]T, 0, len(a)+len(b))
+	res = append(res, a...)
+	res = append(res, b...)
+	return res
+}
+func (s *schedService) disableElapsedSchedules(tx *sql.Tx, schedules []*dto.Schedule) error {
+	now := time.Now()
+	for _, sched := range schedules {
+		if sched.EndAt.Before(now) {
+			if err := s.schedRepo.UpdateActive(tx, sched.ID, false); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (s *schedService) nofifyAll(ctx context.Context, schedules []*dto.Schedule) ([]*dto.Schedule, []*dto.Schedule) {
@@ -156,6 +172,7 @@ type result struct {
 
 func (s *schedService) notify(ctx context.Context, sched *model.Schedule, i int, ch chan result) {
 	go func() {
+		log.WithField("scheduleId", sched.ID).WithField("tick", sched.NextScheduleAt).Info("sendingNotification")
 		err := s.notificationSvc.Send(ctx, sched.URL, sched)
 		ch <- result{err: err, idx: i}
 	}()
@@ -165,42 +182,56 @@ const (
 	MaxFailures = 10
 )
 
-func (s *schedService) planNextSchedule(tx *sql.Tx, succeeded, failed []*dto.Schedule) ([]*dto.Schedule, error) {
-	schedules := make([]*dto.Schedule, 0, len(succeeded)+len(failed))
+func (s *schedService) pauseOrIncrementFailures(tx *sql.Tx, schedules []*dto.Schedule) ([]*dto.Schedule, []*dto.Schedule, error) {
+	paused := make([]*dto.Schedule, 0, len(schedules))
+	failed := make([]*dto.Schedule, 0, len(schedules))
 
-	schedules = append(schedules, succeeded...)
-	schedules = append(schedules, failed...)
+	for _, sched := range failed {
+		log.WithField("scheduledId", sched.ID).WithField("failures", sched.Failures).Warn("schedule notification failed")
 
-	paused := make([]*dto.Schedule, 0, len(failed))
-	for i, sched := range schedules {
-		failed := i >= len(succeeded)
-		if failed && sched.Failures+1 >= MaxFailures {
+		newFailures := sched.Failures + 1
+		if newFailures >= MaxFailures {
+			log.WithField("scheduledId", sched.ID).Warn("pausing schedule")
+
 			if err := s.schedRepo.UpdateActive(tx, sched.ID, false); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			paused = append(paused, sched)
+		} else {
+			failed = append(failed, sched)
+			if err := s.schedRepo.UpdateFailures(tx, sched.ID, newFailures); err != nil {
+				return nil, nil, err
+			}
 		}
+	}
+	return paused, failed, nil
+}
 
-		nextScheduleTime := model.NextScheduleAfter(sched.CronExpr, sched.NextScheduleAt)
+func (s *schedService) planNextSchedule(tx *sql.Tx, schedules []*dto.Schedule) error {
+	for _, sched := range schedules {
+		nextScheduleTime := cron.NextTickAfter(sched.CronExpr, sched.NextScheduleAt, false)
 
 		log.WithField("scheduleId", sched.ID).
 			WithField("nextScheduleTime", nextScheduleTime).
 			Info("planning next schedule")
 
-		failures := 0
-		if failed {
-			failures = sched.Failures + 1
-		}
-
-		if err := s.schedRepo.UpdateScheduleTimeAndFailures(tx, sched.ID, nextScheduleTime, failures); err != nil {
-			return nil, err
+		if err := s.schedRepo.UpdateScheduleTime(tx, sched.ID, nextScheduleTime); err != nil {
+			return err
 		}
 	}
-
-	return paused, nil
+	return nil
 }
 
-func getStatus(isActive bool) string {
+func getStatus(isActive bool, startTime, endTime time.Time) string {
+	now := time.Now()
+	if now.Before(startTime) {
+		return model.NotStartedStatus
+	}
+
+	if now.After(endTime) {
+		return model.ElapsedStatus
+	}
+
 	if isActive {
 		return model.ActiveStatus
 	}
@@ -256,18 +287,26 @@ func (s *schedService) ListSchedules(offset, limit int) ([]*model.Schedule, erro
 }
 
 func fromDTOSchedule(sched *dto.Schedule) *model.Schedule {
+	var runAt time.Time
+	if !sched.IsRecurring {
+		runAt = sched.NextScheduleAt
+	}
+
 	return &model.Schedule{
 		ID:             sched.ID,
 		Title:          sched.Title,
 		Description:    sched.Description,
-		Status:         getStatus(sched.Active),
+		Status:         getStatus(sched.Active, sched.StartAt, sched.EndAt),
 		Email:          sched.Email,
 		URL:            sched.URL,
 		CronExpr:       sched.CronExpr,
 		Metadata:       sched.Metadata,
+		IsRecurring:    sched.IsRecurring,
+		StartAt:        sched.StartAt,
+		RunAt:          runAt,
+		EndAt:          sched.EndAt,
 		CreatedAt:      sched.CreatedAt,
 		NextScheduleAt: sched.NextScheduleAt,
-		Failures:       sched.Failures,
 	}
 }
 
@@ -348,12 +387,12 @@ func (s *schedService) ResumeSchedule(id string) (*model.Schedule, error) {
 		return nil, err
 	}
 
-	nextTick := model.NextScheduleAfter(dtoSched.CronExpr, time.Now())
+	nextTick := cron.NextTickAfter(dtoSched.CronExpr, time.Now(), false)
 	log.WithField("scheduleId", dtoSched.ID).
 		WithField("nextScheduleAt", nextTick).
 		Info("resuming schedule")
 
-	if err := s.schedRepo.UpdateScheduleTimeAndFailures(tx, dtoSched.ID, nextTick, 0); err != nil {
+	if err := s.schedRepo.UpdateFailures(tx, dtoSched.ID, 0); err != nil {
 		return nil, err
 	}
 

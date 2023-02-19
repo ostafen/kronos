@@ -78,6 +78,22 @@ On success, the response of the server will be similar to the following:
 }
 ```
 
+The above table contains the full list of supported fields:
+
+| Parameter   |      Required      | Description |
+|-------------|:------------------:|:------------|
+| title |  true | the name of your schedule. It must be unique. |
+| description |  false   | an optional description of your schedule. |
+| isRecurring | false | whether the schedule is recurring or not. |
+| cronExpr | if isRecurring = true | cron expression for recurring schedules. |
+| url | true | webhook notification endpoint. |
+| email | false | email address for notifying repeated failures. |
+| runAt | if isRecurring = false | for non-recurring schedules, it indicates the instant the schedule will be triggered at. |
+| startAt | false | UTC start date of the schedule. Must be equal to runAt if isRecurring = false. |
+| endAt | false | UTC end date of the schedule. Must be equal to runAt if isRecurring = false. |
+| metadata | false | optional metadata which will be sent when triggering a webhook. |
+
+
 ## REST API
 
 - **POST** `/schedules` - Register a new schedule

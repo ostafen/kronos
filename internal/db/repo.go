@@ -14,7 +14,8 @@ type ScheduleRepo interface {
 	Delete(tx *sql.Tx, id string) error
 	PickPending(tx *sql.Tx, limit int) ([]*dto.Schedule, error)
 	NextScheduleTime(tx *sql.Tx) (*time.Time, error)
-	UpdateScheduleTimeAndFailures(tx *sql.Tx, id string, schedTime time.Time, failures int) error
+	UpdateScheduleTime(tx *sql.Tx, id string, schedTime time.Time) error
+	UpdateFailures(tx *sql.Tx, id string, failures int) error
 	UpdateActive(tx *sql.Tx, id string, active bool) error
 }
 
