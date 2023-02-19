@@ -41,7 +41,7 @@ func (repo *sqliteJobRepo) Insert(sched *dto.Schedule) (string, error) {
 		&sched.Email,
 		&sched.IsRecurring,
 		&sched.CreatedAt,
-		&sched.NextScheduleAt,
+		&sched.NextTickAt,
 		&sched.StartAt,
 		&sched.EndAt,
 		&sched.Metadata,
@@ -95,7 +95,7 @@ func ScanSchedule[R Row](row R) (*dto.Schedule, error) {
 		&sched.Email,
 		&sched.IsRecurring,
 		&sched.CreatedAt,
-		&sched.NextScheduleAt,
+		&sched.NextTickAt,
 		&sched.StartAt,
 		&sched.EndAt,
 		&sched.Metadata,
@@ -109,8 +109,8 @@ func (repo *sqliteJobRepo) PickPending(tx *sql.Tx, limit int) ([]*dto.Schedule, 
 		strings.Join(schedTableCols, ","),
 		schedTableName,
 		schedTableActiveCol,
-		schedTableNextScheduleAtCol,
-		schedTableNextScheduleAtCol,
+		schedTableNextTickAtCol,
+		schedTableNextTickAtCol,
 	)
 
 	rows, err := tx.Query(query, true, time.Now().UTC(), limit)
@@ -131,7 +131,7 @@ func (repo *sqliteJobRepo) PickPending(tx *sql.Tx, limit int) ([]*dto.Schedule, 
 }
 
 func (repo *sqliteJobRepo) NextScheduleTime(tx *sql.Tx) (*time.Time, error) {
-	query := fmt.Sprintf(`SELECT %s FROM %s WHERE %s = $1 ORDER BY %s ASC LIMIT 1`, schedTableNextScheduleAtCol, schedTableName, schedTableActiveCol, schedTableNextScheduleAtCol)
+	query := fmt.Sprintf(`SELECT %s FROM %s WHERE %s = $1 ORDER BY %s ASC LIMIT 1`, schedTableNextTickAtCol, schedTableName, schedTableActiveCol, schedTableNextTickAtCol)
 
 	var nextTime *time.Time
 	row := tx.QueryRow(query, true)
@@ -150,7 +150,7 @@ func (repo *sqliteJobRepo) Delete(tx *sql.Tx, id string) error {
 func (repo *sqliteJobRepo) UpdateScheduleTime(tx *sql.Tx, id string, schedTime time.Time) error {
 	stmt := fmt.Sprintf(`UPDATE %s SET %s = $1 WHERE %s = $2`,
 		schedTableName,
-		schedTableNextScheduleAtCol,
+		schedTableNextTickAtCol,
 		schedTableIdCol,
 	)
 

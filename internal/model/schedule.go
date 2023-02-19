@@ -87,35 +87,35 @@ func (input *ScheduleRegisterInput) ToSched() (*dto.Schedule, error) {
 	}
 
 	return &dto.Schedule{
-		ID:             uuid.NewString(),
-		Active:         true,
-		Title:          input.Title,
-		Description:    input.Description,
-		CronExpr:       input.CronExpr,
-		IsRecurring:    input.Recurring(),
-		Email:          input.Email,
-		URL:            input.URL,
-		Metadata:       input.Metadata,
-		NextScheduleAt: nextSchedule,
-		StartAt:        input.StartAt,
-		EndAt:          input.EndAt,
-		CreatedAt:      time.Now(),
+		ID:          uuid.NewString(),
+		Active:      true,
+		Title:       input.Title,
+		Description: input.Description,
+		CronExpr:    input.CronExpr,
+		IsRecurring: input.Recurring(),
+		Email:       input.Email,
+		URL:         input.URL,
+		Metadata:    input.Metadata,
+		NextTickAt:  nextSchedule,
+		StartAt:     input.StartAt,
+		EndAt:       input.EndAt,
+		CreatedAt:   time.Now(),
 	}, nil
 }
 
 type Schedule struct {
-	ID             string            `json:"id"`
-	Title          string            `json:"title"`
-	Status         string            `json:"status"`
-	Description    string            `json:"description"`
-	CronExpr       string            `json:"cronExpr"`
-	Email          string            `json:"email"`
-	URL            string            `json:"url"`
-	Metadata       map[string]string `json:"metadata"`
-	CreatedAt      time.Time         `json:"createdAt"`
-	NextScheduleAt time.Time         `json:"nextScheduleAt"`
-	IsRecurring    bool              `json:"isRecurring"`
-	RunAt          time.Time         `json:"runAt"`
-	StartAt        time.Time         `json:"startAt"`
-	EndAt          time.Time         `json:"endAt"`
+	ID          string            `json:"id"`
+	Title       string            `json:"title"`
+	Status      string            `json:"status"`
+	Description string            `json:"description"`
+	CronExpr    string            `json:"cronExpr"`
+	Email       string            `json:"email"`
+	URL         string            `json:"url"`
+	Metadata    map[string]string `json:"metadata"`
+	CreatedAt   time.Time         `json:"createdAt"`
+	NextTickAt  time.Time         `json:"nextTickAt"`
+	IsRecurring bool              `json:"isRecurring"`
+	RunAt       time.Time         `json:"runAt"`
+	StartAt     time.Time         `json:"startAt"`
+	EndAt       time.Time         `json:"endAt"`
 }

@@ -44,7 +44,7 @@ services:
     ports:
       - '9175:9175'
     environment:
-      - PORT=9175 # each property is also exposed through an environment variable
+      - PORT=9175 # configuration properties can be overridden through environment variables
       - STORE_HOST=/data/kronos.sqlite
     volumes:
       - ./data:/data

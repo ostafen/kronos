@@ -172,7 +172,7 @@ type result struct {
 
 func (s *schedService) notify(ctx context.Context, sched *model.Schedule, i int, ch chan result) {
 	go func() {
-		log.WithField("scheduleId", sched.ID).WithField("tick", sched.NextScheduleAt).Info("sendingNotification")
+		log.WithField("scheduleId", sched.ID).WithField("tick", sched.NextTickAt).Info("sendingNotification")
 		err := s.notificationSvc.Send(ctx, sched.URL, sched)
 		ch <- result{err: err, idx: i}
 	}()
@@ -209,7 +209,7 @@ func (s *schedService) pauseOrIncrementFailures(tx *sql.Tx, schedules []*dto.Sch
 
 func (s *schedService) planNextSchedule(tx *sql.Tx, schedules []*dto.Schedule) error {
 	for _, sched := range schedules {
-		nextScheduleTime := cron.NextTickAfter(sched.CronExpr, sched.NextScheduleAt, false)
+		nextScheduleTime := cron.NextTickAfter(sched.CronExpr, sched.NextTickAt, false)
 
 		log.WithField("scheduleId", sched.ID).
 			WithField("nextScheduleTime", nextScheduleTime).
@@ -289,24 +289,24 @@ func (s *schedService) ListSchedules(offset, limit int) ([]*model.Schedule, erro
 func fromDTOSchedule(sched *dto.Schedule) *model.Schedule {
 	var runAt time.Time
 	if !sched.IsRecurring {
-		runAt = sched.NextScheduleAt
+		runAt = sched.NextTickAt
 	}
 
 	return &model.Schedule{
-		ID:             sched.ID,
-		Title:          sched.Title,
-		Description:    sched.Description,
-		Status:         getStatus(sched.Active, sched.StartAt, sched.EndAt),
-		Email:          sched.Email,
-		URL:            sched.URL,
-		CronExpr:       sched.CronExpr,
-		Metadata:       sched.Metadata,
-		IsRecurring:    sched.IsRecurring,
-		StartAt:        sched.StartAt,
-		RunAt:          runAt,
-		EndAt:          sched.EndAt,
-		CreatedAt:      sched.CreatedAt,
-		NextScheduleAt: sched.NextScheduleAt,
+		ID:          sched.ID,
+		Title:       sched.Title,
+		Description: sched.Description,
+		Status:      getStatus(sched.Active, sched.StartAt, sched.EndAt),
+		Email:       sched.Email,
+		URL:         sched.URL,
+		CronExpr:    sched.CronExpr,
+		Metadata:    sched.Metadata,
+		IsRecurring: sched.IsRecurring,
+		StartAt:     sched.StartAt,
+		RunAt:       runAt,
+		EndAt:       sched.EndAt,
+		CreatedAt:   sched.CreatedAt,
+		NextTickAt:  sched.NextTickAt,
 	}
 }
 

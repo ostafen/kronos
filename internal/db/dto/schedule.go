@@ -22,18 +22,18 @@ func (meta *Metadata) Scan(value interface{}) error {
 }
 
 type Schedule struct {
-	ID             string
-	Active         bool
-	Title          string
-	Description    string
-	CronExpr       string
-	URL            string
-	Email          string
-	IsRecurring    bool
-	Metadata       Metadata
-	CreatedAt      time.Time
-	NextScheduleAt time.Time
-	StartAt        time.Time
-	EndAt          time.Time
-	Failures       int
+	ID          string
+	Active      bool
+	Title       string
+	Description string
+	CronExpr    string
+	URL         string
+	Email       string
+	IsRecurring bool
+	Metadata    Metadata
+	CreatedAt   time.Time
+	NextTickAt  time.Time
+	StartAt     time.Time
+	EndAt       time.Time
+	Failures    int
 }

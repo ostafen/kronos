@@ -9,20 +9,20 @@ const (
 )
 
 const (
-	schedTableIdCol             = "id"
-	schedTableTitleCol          = "title"
-	schedTableActiveCol         = "active"
-	schedTableDescriptionCol    = "description"
-	schedTableUrlCol            = "url"
-	schedTableCronExprCol       = "cron_expr"
-	schedTableEmailCol          = "email"
-	schedTableNextScheduleAtCol = "next_schedule_at"
-	schedTableCreatedAtCol      = "created_at"
-	schedTableMetadataCol       = "metadata"
-	schedTableFailuresCol       = "failures"
-	schedTableIsRecurringCol    = "is_recurring"
-	schedTableStartAtCol        = "start_at"
-	schedTableEndAtCol          = "end_at"
+	schedTableIdCol          = "id"
+	schedTableTitleCol       = "title"
+	schedTableActiveCol      = "active"
+	schedTableDescriptionCol = "description"
+	schedTableUrlCol         = "url"
+	schedTableCronExprCol    = "cron_expr"
+	schedTableEmailCol       = "email"
+	schedTableNextTickAtCol  = "next_tick_at"
+	schedTableCreatedAtCol   = "created_at"
+	schedTableMetadataCol    = "metadata"
+	schedTableFailuresCol    = "failures"
+	schedTableIsRecurringCol = "is_recurring"
+	schedTableStartAtCol     = "start_at"
+	schedTableEndAtCol       = "end_at"
 )
 
 var schedTableCols = []string{
@@ -35,7 +35,7 @@ var schedTableCols = []string{
 	schedTableEmailCol,
 	schedTableIsRecurringCol,
 	schedTableCreatedAtCol,
-	schedTableNextScheduleAtCol,
+	schedTableNextTickAtCol,
 	schedTableStartAtCol,
 	schedTableEndAtCol,
 	schedTableMetadataCol,

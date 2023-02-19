@@ -42,7 +42,7 @@ func (m *Migrator) createSchedulesTable(tx *sql.Tx) error {
 		created_at TIMESTAMP NOT NULL,
 		start_at TIMESTAMP NOT NULL,
 		end_at TIMESTAMP NOT NULL,
-		next_schedule_at TIMESTAMP NOT NULL,
+		next_tick_at TIMESTAMP NOT NULL,
 		failures INT NOT NULL DEFAULT 0,
 		metadata BLOB NOT NULL
 	)`)
