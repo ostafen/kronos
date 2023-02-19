@@ -17,7 +17,7 @@ foo@bar$ make build
 ```
 to build an executable which will be output to the `bin` subfolder.
 
-# Sample configuration
+# Yaml file configuration
 
 ```yaml
 logging:
@@ -35,7 +35,7 @@ store:
   driver: sqlite3 # currently, the only driver supported
 ```
 
-# Docker image
+# Docker compose configuration
 
 ```yaml
 services:
