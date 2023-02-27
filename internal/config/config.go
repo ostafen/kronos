@@ -46,7 +46,7 @@ func Read() (*Config, error) {
 }
 
 func viperDefaults() {
-	viper.SetDefault("store.path", "kronos.bbolt")
+	viper.SetDefault("store.path", "kronos.bolt")
 	viper.SetDefault("port", 9175)
 }
 
