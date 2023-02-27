@@ -32,7 +32,7 @@ alert:
 port: 9175
 
 store:
-  driver: sqlite3 # currently, the only driver supported
+  path: ":inmemory:"
 ```
 
 ## Docker compose configuration
@@ -109,3 +109,9 @@ The above table contains the full list of supported fields:
 - **POST** `/schedules/{id}/pause` - Pause an active schedule
 - **POST** `/schedules/{id}/resume` - Resume a paused schedule
 - **POST** `/schedules/{id}/trigger` - Immediately trigger a notification for a given schedule
+
+## Contact
+Stefano Scafiti @ostafen
+
+## License
+Kronos source code is available under the **MIT** License.

@@ -9,12 +9,7 @@ import (
 )
 
 type Store struct {
-	Driver   string `mapstructure:"driver" default:"sqlite"`
-	Host     string `mapstructure:"host"`
-	Port     int64  `mapstructure:"port"`
-	User     string `mapstructure:"user"`
-	Password string `mapstructure:"password"`
-	DB       string `mapstructure:"db" default:"kronos"`
+	Path string `mapstructure:"path"`
 }
 
 type Log struct {
@@ -22,19 +17,8 @@ type Log struct {
 	Format string `mapstructure:"format"`
 }
 
-type Email struct {
-	Server   string `mapstructure:"server"`
-	Address  string `mapstructure:"address"`
-	Password string `mapstructure:"password"`
-}
-
-type Alert struct {
-	Email Email `mapstructure:"email"`
-}
-
 type Config struct {
 	Port    int64 `mapstructure:"port"`
-	Alert   Alert `mapstructure:"alert"`
 	Logging Log   `mapstructure:"logging"`
 	Store   Store `mapstructure:"store"`
 }
@@ -62,8 +46,8 @@ func Read() (*Config, error) {
 }
 
 func viperDefaults() {
+	viper.SetDefault("store.path", "kronos.bbolt")
 	viper.SetDefault("port", 9175)
-	viper.SetDefault("store.driver", "sqlite3")
 }
 
 func bindEnv(v any) error {

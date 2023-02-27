@@ -9,7 +9,7 @@ import (
 )
 
 type NotificationService interface {
-	Send(ctx context.Context, url string, payload any) error
+	Send(ctx context.Context, url string, payload any) (int, error)
 }
 
 type httpNotificationService struct {
@@ -23,25 +23,25 @@ func isSuccess(resp *http.Response) bool {
 	return resp.StatusCode >= 200 && resp.StatusCode < 300
 }
 
-func (s *httpNotificationService) Send(ctx context.Context, url string, payload any) error {
+func (s *httpNotificationService) Send(ctx context.Context, url string, payload any) (int, error) {
 	data, err := json.Marshal(payload)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return http.StatusServiceUnavailable, err
 	}
 
 	if !isSuccess(resp) {
-		return fmt.Errorf("webhook notification to %s failed with status: %s", url, resp.Status)
+		err = fmt.Errorf("webhook notification to %s failed with status: %s", url, resp.Status)
 	}
-	return nil
+	return resp.StatusCode, err
 }
