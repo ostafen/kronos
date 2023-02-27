@@ -6,7 +6,7 @@ Kronos allows you to periodically invoke your webhooks using cron expressions.
 
 - :zap: Easy to use REST API to schedule your webhooks;
 - :alarm_clock: Complex scheduling using cron expressions;
-- :mailbox_with_mail: Get email notification on repeated failures.
+- :mailbox_with_mail: **Prometheus** integration for getting failures notifications.
 
 ## Build (Go 1.9+)
 
@@ -23,16 +23,11 @@ to build an executable which will be output to the `bin` subfolder.
 logging:
   level: INFO
   format: JSON
-alert:
-  email:
-    server: smtp-server-address:port
-    address: yuor-email-address
-    password: your-email-password # if you use gmail with 2FA enabled, you can use app password
 
 port: 9175
 
 store:
-  driver: sqlite3 # currently, the only driver supported
+  path: "/path/to/db/file" # default is kronos.bolt
 ```
 
 ## Docker compose configuration
@@ -45,7 +40,7 @@ services:
       - '9175:9175'
     environment:
       - PORT=9175 # configuration properties can be overridden through environment variables
-      - STORE_HOST=/data/kronos.sqlite
+      - STORE_PATH=/data/kronos.bolt
     volumes:
       - ./data:/data
 ```
@@ -58,7 +53,6 @@ curl -X POST localhost:9175/schedules -H 'Content-Type: application/json' -d \
     "title": "sample-schedule",
     "description": "a sample schedule description",
     "cronExpr": "0/1 * * * *",
-    "email": "your-notification-email",
     "url": "your-webhook-address",
     "isRecurring": true,
     "startAt": "2023-02-19T11:34:00Z",
@@ -73,7 +67,6 @@ On success, the response of the server will be similar to the following:
     "status": "not_started",
     "description": "a sample schedule description",
     "cronExpr": "0/1 * * * *",
-    "email": "your-notification-email",
     "url": "your-webhook-address",
     "metadata": null,
     "isRecurring": true,
@@ -94,7 +87,6 @@ The above table contains the full list of supported fields:
 | isRecurring | false | whether the schedule is recurring or not. |
 | cronExpr | if isRecurring = true | cron expression for recurring schedules. |
 | url | true | webhook notification endpoint. |
-| email | false | email address for notifying repeated failures. |
 | runAt | if isRecurring = false | for non-recurring schedules, it indicates the instant the schedule will be triggered at. |
 | startAt | false | UTC start date of the schedule. Must be equal to runAt if isRecurring = false. |
 | endAt | false | UTC end date of the schedule. Must be equal to runAt if isRecurring = false. |
@@ -109,3 +101,9 @@ The above table contains the full list of supported fields:
 - **POST** `/schedules/{id}/pause` - Pause an active schedule
 - **POST** `/schedules/{id}/resume` - Resume a paused schedule
 - **POST** `/schedules/{id}/trigger` - Immediately trigger a notification for a given schedule
+
+## Contact
+Stefano Scafiti @ostafen
+
+## License
+Kronos source code is available under the **MIT** License.

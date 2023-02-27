@@ -107,7 +107,11 @@ func (api *ScheduleApi) DeleteSchedule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *ScheduleApi) ListSchedules(w http.ResponseWriter, r *http.Request) {
-	schedules, err := api.svc.ListSchedules(-1, -1)
+	schedules := make([]*model.Schedule, 0)
+	err := api.svc.IterSchedules(func(s *model.Schedule) error {
+		schedules = append(schedules, s)
+		return nil
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

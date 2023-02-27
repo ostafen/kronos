@@ -1,5 +1,6 @@
 BIN_FOLDER = ./bin
 EXEC_NAME = kronos
+TOOLS=./tools
 
 BUILD_TIME := $(shell date)
 COMMIT := $(shell git rev-parse HEAD)
@@ -12,6 +13,9 @@ build: vendor
 	@mkdir -p $(BIN_FOLDER)
 	go build -mod vendor -a -installsuffix cgo -ldflags '-w -s -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X "main.buildTime=$(BUILD_TIME)"' -o $(BIN_FOLDER)/$(EXEC_NAME) cmd/main.go
 
+generate:
+	go generate ./...
+
 vendor:
 	go mod vendor
 
@@ -20,3 +24,5 @@ docker-build:
 
 docker-push:
 	docker push ${IMG_NAME}:${IMG_TAG}
+
+

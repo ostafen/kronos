@@ -7,22 +7,21 @@ import (
 	"github.com/adhocore/gronx"
 	"github.com/google/uuid"
 	"github.com/ostafen/kronos/internal/cron"
-	"github.com/ostafen/kronos/internal/db/dto"
-	"github.com/sirupsen/logrus"
 )
 
+type ScheduleStatus string
+
 const (
-	NotStartedStatus = "not_started"
-	ActiveStatus     = "active"
-	PausedStatus     = "paused"
-	ElapsedStatus    = "elapsed"
+	ScheduleStatusNotStarted ScheduleStatus = "not_started"
+	ScheduleStatusActive     ScheduleStatus = "active"
+	ScheduleStatusPaused     ScheduleStatus = "paused"
+	ScheduleStatusExpired    ScheduleStatus = "expired"
 )
 
 type ScheduleRegisterInput struct {
 	Title       string            `json:"title" validate:"required"`
 	Description string            `json:"description"`
 	CronExpr    string            `json:"cronExpr"`
-	Email       string            `json:"email" validate:"required"`
 	URL         string            `json:"url" validate:"required"`
 	IsRecurring *bool             `json:"isRecurring" validate:"required"`
 	RunAt       time.Time         `json:"runAt"`
@@ -71,32 +70,21 @@ func validate(input *ScheduleRegisterInput) error {
 	return nil
 }
 
-func (input *ScheduleRegisterInput) ToSched() (*dto.Schedule, error) {
+func (input *ScheduleRegisterInput) ToSched() (*Schedule, error) {
 	if err := validate(input); err != nil {
 		return nil, err
 	}
 
-	nextSchedule := input.RunAt
-	if input.Recurring() {
-		start := input.StartAt
-		if now := time.Now(); now.After(start) {
-			start = now
-		}
-		nextSchedule = cron.NextTickAfter(input.CronExpr, start, true)
-		logrus.Info(nextSchedule)
-	}
-
-	return &dto.Schedule{
+	return &Schedule{
 		ID:          uuid.NewString(),
-		Active:      true,
+		Status:      ScheduleStatusActive,
 		Title:       input.Title,
 		Description: input.Description,
 		CronExpr:    input.CronExpr,
 		IsRecurring: input.Recurring(),
-		Email:       input.Email,
 		URL:         input.URL,
 		Metadata:    input.Metadata,
-		NextTickAt:  nextSchedule,
+		RunAt:       input.RunAt,
 		StartAt:     input.StartAt,
 		EndAt:       input.EndAt,
 		CreatedAt:   time.Now(),
@@ -106,16 +94,42 @@ func (input *ScheduleRegisterInput) ToSched() (*dto.Schedule, error) {
 type Schedule struct {
 	ID          string            `json:"id"`
 	Title       string            `json:"title"`
-	Status      string            `json:"status"`
+	Status      ScheduleStatus    `json:"status"`
 	Description string            `json:"description"`
 	CronExpr    string            `json:"cronExpr"`
-	Email       string            `json:"email"`
 	URL         string            `json:"url"`
 	Metadata    map[string]string `json:"metadata"`
 	CreatedAt   time.Time         `json:"createdAt"`
-	NextTickAt  time.Time         `json:"nextTickAt"`
 	IsRecurring bool              `json:"isRecurring"`
-	RunAt       time.Time         `json:"runAt"`
+	RunAt       time.Time         `json:"runAt,omitempty"`
 	StartAt     time.Time         `json:"startAt"`
 	EndAt       time.Time         `json:"endAt"`
+	Failures    int               `json:"-"`
+}
+
+func (s *Schedule) nextTick(start time.Time, includeStart bool) time.Time {
+	if !s.IsRecurring {
+		return s.RunAt
+	}
+	return cron.NextTickAfter(s.CronExpr, start, includeStart)
+}
+
+func (s *Schedule) FirstTick() time.Time {
+	return s.nextTick(s.StartAt, true)
+}
+
+func (s *Schedule) Expired() bool {
+	return !s.EndAt.After(time.Now())
+}
+
+func (s *Schedule) NextTickAt() time.Time {
+	now := time.Now()
+	if now.Before(s.FirstTick()) {
+		return s.FirstTick()
+	}
+	return s.nextTick(time.Now(), false)
+}
+
+func (s *Schedule) IsActive() bool {
+	return s.Status == ScheduleStatusActive
 }
