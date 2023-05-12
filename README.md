@@ -102,13 +102,6 @@ The above table contains the full list of supported fields:
 - **POST** `/schedules/{id}/resume` - Resume a paused schedule
 - **POST** `/schedules/{id}/trigger` - Immediately trigger a notification for a given schedule
 
-## TODOS
-
-- [] Unit testing
-- [] CI/CD pipelines for build and tests
-- [] Use caching to improve lookup performance
-- [] Write better documentation
-
 ## Contact
 Stefano Scafiti @ostafen
 
