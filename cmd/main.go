@@ -15,8 +15,8 @@ import (
 	"github.com/ostafen/kronos/internal/sched"
 	"github.com/ostafen/kronos/internal/service"
 	"github.com/ostafen/kronos/internal/store"
+	statichttp "github.com/ostafen/kronos/web"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -148,8 +148,12 @@ func getFormatter(format string) log.Formatter {
 }
 
 func configureRouter(svc service.ScheduleService) {
+	a := statichttp.Static
+
 	r := mux.NewRouter()
 
+	fs := http.FileServer(http.FS(a))
+	r.PathPrefix("/web").Handler(http.StripPrefix("/", fs))
 	scheduleApi := api.NewScheduleApi(svc)
 
 	r.Handle("/metrics", promhttp.Handler()).Methods("GET")
@@ -162,6 +166,7 @@ func configureRouter(svc service.ScheduleService) {
 	r.HandleFunc("/schedules/{id}/pause", scheduleApi.PauseSchedule).Methods("POST")
 	r.HandleFunc("/schedules/{id}/resume", scheduleApi.ResumeSchedule).Methods("POST")
 	r.HandleFunc("/schedules/{id}/trigger", scheduleApi.TriggerSchedule).Methods("POST")
+	// r.PathPrefix("/").Handler(http.FileServer(http.Dir("../web/build/")))
 
 	http.Handle("/", r)
 }
