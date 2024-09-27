@@ -6,11 +6,11 @@
 
 ## Features:
 
-- Simple DSL: Define your workflows using a clear, JSON-like syntax.
+- :sparkles: Simple DSL: Define your workflows using a clear, JSON-like syntax.
 
 - :zap: REST API Integration: Schedule and manage webhooks easily.
 
-- Distributed Execution: Run tasks across multiple environments.
+- :rocket: Distributed Execution: Run tasks across multiple environments.
 
 - :alarm_clock: Flexible Scheduling: Create complex scheduling patterns with cron expressions.
 
