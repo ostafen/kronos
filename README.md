@@ -1,12 +1,18 @@
-# Kronos
+# Kronos - Cron Job Webhook Scheduler
 
-Kronos allows you to periodically invoke your webhooks using cron expressions.
+## Overview
+
+**Kronos** is a powerful cron job webhook scheduler that allows you to define and manage scheduled tasks with ease. Utilizing a simple JSON-like DSL, Kronos makes it easy to schedule webhooks and automate workflows seamlessly.
 
 ## Features:
 
-- :zap: Easy to use REST API to schedule your webhooks;
-- :alarm_clock: Complex scheduling using cron expressions;
-- :mailbox_with_mail: **Prometheus** integration for getting failures notifications.
+- :sparkles: Simple DSL: Define your workflows using a clear, JSON-like syntax.
+
+- :zap: REST API Integration: Schedule and manage webhooks easily.
+
+- :rocket: Distributed Execution: Run tasks across multiple environments.
+
+- :alarm_clock: Flexible Scheduling: Create complex scheduling patterns with cron expressions.
 
 ## Build (Go 1.9+)
 
