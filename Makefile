@@ -8,9 +8,10 @@ VERSION ?= latest
 
 IMG_NAME ?= ghcr.io/ostafen/kronos
 IMG_TAG ?= latest
-
+	
 build: vendor
 	@mkdir -p $(BIN_FOLDER)
+	cd web && npm run build 
 	go build -mod vendor -a -installsuffix cgo -ldflags '-w -s -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X "main.buildTime=$(BUILD_TIME)"' -o $(BIN_FOLDER)/$(EXEC_NAME) cmd/main.go
 
 generate:
