@@ -1,3 +1,4 @@
 vendor
+data/kronos.bolt
 bin
 *.sqlite
