@@ -17,6 +17,7 @@ import (
 	"github.com/ostafen/kronos/internal/store"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -163,5 +164,14 @@ func configureRouter(svc service.ScheduleService) {
 	r.HandleFunc("/schedules/{id}/resume", scheduleApi.ResumeSchedule).Methods("POST")
 	r.HandleFunc("/schedules/{id}/trigger", scheduleApi.TriggerSchedule).Methods("POST")
 
-	http.Handle("/", r)
+	http.Handle("/", withCors(r, cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
+	}))
+}
+
+func withCors(handler http.Handler, opts cors.Options) http.Handler {
+	c := cors.New(opts)
+	return c.Handler(handler)
 }
