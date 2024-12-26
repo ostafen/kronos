@@ -1,5 +1,6 @@
-import { Box, BoxProps, Flex, HStack, Link } from '@chakra-ui/react';
+import { Box, BoxProps, Flex, HStack } from '@chakra-ui/react';
 import ButtonLink from '@/components/atoms/ButtonLink/ButtonLink';
+import ChakraLink from '@/components/atoms/ChakraLink';
 
 const links: { name: string; path: string }[] = [];
 
@@ -12,9 +13,9 @@ export default function Navbar(props: BoxProps) {
         alignItems="center"
         justifyContent="space-between"
       >
-        <Link as="a" href="/" fontSize="xl" fontWeight="bold" aria-label="Home">
+        <ChakraLink to="/" fontSize="xl" fontWeight="bold" aria-label="Home">
           Kronos
-        </Link>
+        </ChakraLink>
 
         <nav aria-label="Primary Navigation">
           <HStack as="ul">
