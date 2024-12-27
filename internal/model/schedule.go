@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/adhocore/gronx"
-	"github.com/google/uuid"
 	"github.com/ostafen/kronos/internal/cron"
 )
 
@@ -25,8 +23,8 @@ type ScheduleRegisterInput struct {
 	URL         string            `json:"url" validate:"required"`
 	IsRecurring *bool             `json:"isRecurring" validate:"required"`
 	RunAt       time.Time         `json:"runAt"`
-	StartAt     time.Time         `json:"startAt" validate:"required"`
-	EndAt       time.Time         `json:"endAt" validate:"required"`
+	StartAt     time.Time         `json:"startAt"`
+	EndAt       time.Time         `json:"endAt"`
 	Metadata    map[string]string `json:"metadata"`
 }
 
@@ -35,26 +33,19 @@ func (input *ScheduleRegisterInput) Recurring() bool {
 }
 
 func validate(input *ScheduleRegisterInput) error {
-	if *input.IsRecurring {
-		gron := gronx.New()
-		if !gron.IsValid(input.CronExpr) {
+	if input.Recurring() {
+		if !cron.IsValid(input.CronExpr) {
 			return fmt.Errorf("invalid cronExpr %s", input.CronExpr)
 		}
 
-		if input.StartAt.IsZero() || input.EndAt.IsZero() {
-			return fmt.Errorf(`both "startAt" and "endAt" must be specified for recurring schedule`)
-		}
-
-		if input.EndAt.Before(time.Now()) {
+		if !input.EndAt.IsZero() && input.EndAt.Before(time.Now()) {
 			return fmt.Errorf(`"endAt" must be a valide date in the future`)
 		}
 
 		if input.EndAt.Before(input.StartAt) {
 			return fmt.Errorf(`"endAt" must be greater than or equal to "startAt"`)
 		}
-	}
-
-	if !input.Recurring() {
+	} else {
 		if input.RunAt.IsZero() {
 			return fmt.Errorf(`"runAt" must be set for non recurring schedule`)
 		}
@@ -63,20 +54,30 @@ func validate(input *ScheduleRegisterInput) error {
 			return fmt.Errorf(`"runAt" must be a valide date in the future`)
 		}
 
-		if !input.StartAt.Equal(input.RunAt) || !input.EndAt.Equal(input.RunAt) {
-			return fmt.Errorf(`"startAt" and "endAt" must both be equal to "runAt"`)
+		if !input.StartAt.IsZero() || !input.EndAt.IsZero() {
+			return fmt.Errorf(`"startAt"/"endAt" should not be set together with "runAt"`)
 		}
 	}
 	return nil
 }
 
-func (input *ScheduleRegisterInput) ToSched() (*Schedule, error) {
+var maxTime = time.Date(9999, 12, 31, 23, 59, 59, 999999999, time.UTC)
+
+func (input *ScheduleRegisterInput) ToSched() (*CronSchedule, error) {
 	if err := validate(input); err != nil {
 		return nil, err
 	}
 
-	return &Schedule{
-		ID:          uuid.NewString(),
+	startAt, endAt := input.StartAt, input.EndAt
+	if !input.RunAt.IsZero() {
+		startAt = input.RunAt
+		endAt = input.RunAt
+	} else if input.EndAt.IsZero() {
+		endAt = maxTime
+	}
+
+	return &CronSchedule{
+		ID:          -1,
 		Status:      ScheduleStatusActive,
 		Title:       input.Title,
 		Description: input.Description,
@@ -85,14 +86,14 @@ func (input *ScheduleRegisterInput) ToSched() (*Schedule, error) {
 		URL:         input.URL,
 		Metadata:    input.Metadata,
 		RunAt:       input.RunAt,
-		StartAt:     input.StartAt,
-		EndAt:       input.EndAt,
+		StartAt:     startAt,
+		EndAt:       endAt,
 		CreatedAt:   time.Now(),
 	}, nil
 }
 
-type Schedule struct {
-	ID          string            `json:"id"`
+type CronSchedule struct {
+	ID          int64             `json:"id"`
 	Title       string            `json:"title"`
 	Status      ScheduleStatus    `json:"status"`
 	Description string            `json:"description"`
@@ -107,29 +108,32 @@ type Schedule struct {
 	Failures    int               `json:"-"`
 }
 
-func (s *Schedule) nextTick(start time.Time, includeStart bool) time.Time {
+func (s *CronSchedule) nextTick(start time.Time) time.Time {
 	if !s.IsRecurring {
 		return s.RunAt
 	}
-	return cron.NextTickAfter(s.CronExpr, start, includeStart)
+	return cron.Next(s.CronExpr, start)
 }
 
-func (s *Schedule) FirstTick() time.Time {
-	return s.nextTick(s.StartAt, true)
-}
-
-func (s *Schedule) Expired() bool {
+func (s *CronSchedule) Expired() bool {
 	return !s.EndAt.After(time.Now())
 }
 
-func (s *Schedule) NextTickAt() time.Time {
+func (s *CronSchedule) NextTick() time.Time {
 	now := time.Now()
-	if now.Before(s.FirstTick()) {
-		return s.FirstTick()
+	if s.StartAt.After(now) {
+		return s.nextTick(s.StartAt)
 	}
-	return s.nextTick(time.Now(), false)
+	return s.nextTick(now)
 }
 
-func (s *Schedule) IsActive() bool {
+func (s *CronSchedule) IsActive() bool {
 	return s.Status == ScheduleStatusActive
+}
+
+type CronStatus struct {
+	CronID     int64         `json:"cronId"`
+	At         time.Time     `json:"at"`
+	StatusCode int           `json:"statusCode"`
+	Duration   time.Duration `json:"duration"`
 }
