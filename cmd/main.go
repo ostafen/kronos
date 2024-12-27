@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,9 +9,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ostafen/kronos/internal/api"
 	"github.com/ostafen/kronos/internal/config"
-	"github.com/ostafen/kronos/internal/metrics"
-	"github.com/ostafen/kronos/internal/model"
-	"github.com/ostafen/kronos/internal/sched"
 	"github.com/ostafen/kronos/internal/service"
 	"github.com/ostafen/kronos/internal/store"
 
@@ -65,57 +61,27 @@ func main() {
 		log.Fatal(err)
 	}
 
-	svc := service.NewScheduleService(store, service.NewNotificationService())
-	manager := sched.NewScheduleManager(svc.OnTick)
+	svc := service.NewScheduleService(
+		store,
+		service.NewNotificationService(),
+	)
+	defer svc.Stop()
 
-	err = store.Iterate(func(sched *model.Schedule) error {
-		if sched.IsActive() {
-			log.Info("scheduling %s at %s", sched.ID, sched.NextTickAt())
-
-			manager.Schedule(sched.ID, sched.NextTickAt())
-		}
-		return nil
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	awake := func(_ *model.Schedule) {
-		manager.WakeUp()
-	}
-
-	submitSchedule := func(s *model.Schedule) {
-		manager.Schedule(s.ID, s.FirstTick())
-	}
-
-	svc.OnScheduleRegistered(awake, submitSchedule)
-
-	svc.OnSchedulePaused(func(s *model.Schedule) {
-		manager.Remove(s.ID)
-	})
-
-	svc.OnScheduleResumed(awake, func(s *model.Schedule) {
-		manager.Schedule(s.ID, s.NextTickAt())
-		metrics.ResetScheduleFailures(s.ID)
-	})
-
-	svc.OnScheduleNotified(func(s *model.Schedule, code int) {
-		if code < 200 || code >= 300 {
-			metrics.IncScheduleFailures(s.ID)
-		} else {
-			metrics.ResetScheduleFailures(s.ID)
-		}
-		metrics.IncWebhookRequests(s.URL, code)
-	})
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	manager.Start(ctx)
+	/*
+		svc.OnScheduleNotified(func(s *model.CronSchedule, code int) {
+			if code < 200 || code >= 300 {
+				metrics.IncScheduleFailures(s.ID)
+			} else {
+				metrics.ResetScheduleFailures(s.ID)
+			}
+			metrics.IncWebhookRequests(s.URL, code)
+		})*/
 
 	configureRouter(svc)
 
 	http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil)
+
+	// TODO: soft shutdown
 }
 
 func setupLogging(config config.Log) {
@@ -156,18 +122,23 @@ func configureRouter(svc service.ScheduleService) {
   fs := http.FileServer(http.FS(a))
 	r.PathPrefix("/web").Handler(http.StripPrefix("/", fs))
 
-	scheduleApi := api.NewScheduleApi(svc)
+	handler := api.NewScheduleApiHandler(svc)
 
 	r.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
-	r.HandleFunc("/schedules", scheduleApi.ListSchedules).Methods("GET")
-	r.HandleFunc("/schedules/{id}", scheduleApi.GetSchedule).Methods("GET")
-	r.HandleFunc("/schedules/{id}", scheduleApi.DeleteSchedule).Methods("DELETE")
+	// TODO: health endpoint
 
-	r.HandleFunc("/schedules", scheduleApi.RegisterSchedule).Methods("POST")
-	r.HandleFunc("/schedules/{id}/pause", scheduleApi.PauseSchedule).Methods("POST")
-	r.HandleFunc("/schedules/{id}/resume", scheduleApi.ResumeSchedule).Methods("POST")
-	r.HandleFunc("/schedules/{id}/trigger", scheduleApi.TriggerSchedule).Methods("POST")
+	r.HandleFunc("/api/v1/schedules", handler.ListSchedules).Methods("GET")
+	r.HandleFunc("/api/v1/schedules/{id}", handler.GetSchedule).Methods("GET")
+	r.HandleFunc("/api/v1/schedules/{id}", handler.DeleteSchedule).Methods("DELETE")
+
+	r.HandleFunc("/api/v1/schedules", handler.RegisterSchedule).Methods("POST")
+	r.HandleFunc("/api/v1/schedules/{id}/pause", handler.PauseSchedule).Methods("POST")
+	r.HandleFunc("/api/v1/schedules/{id}/resume", handler.ResumeSchedule).Methods("POST")
+	r.HandleFunc("/api/v1/schedules/{id}/trigger", handler.TriggerSchedule).Methods("POST")
+
+	r.HandleFunc("/api/v1/history", handler.GetHistory).Methods("GET")
+	r.HandleFunc("/api/v1/history/{id}", handler.GetCronHistory).Methods("GET")
 
 	http.Handle("/", withCors(r, cors.Options{
 		AllowedOrigins: []string{"*"},

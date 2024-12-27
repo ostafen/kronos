@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -10,17 +11,17 @@ import (
 	"github.com/ostafen/kronos/internal/service"
 )
 
-type ScheduleApi struct {
+type ScheduleApiHandler struct {
 	svc service.ScheduleService
 }
 
-func NewScheduleApi(svc service.ScheduleService) *ScheduleApi {
-	return &ScheduleApi{
+func NewScheduleApiHandler(svc service.ScheduleService) *ScheduleApiHandler {
+	return &ScheduleApiHandler{
 		svc: svc,
 	}
 }
 
-func (api *ScheduleApi) RegisterSchedule(w http.ResponseWriter, r *http.Request) {
+func (api *ScheduleApiHandler) RegisterSchedule(w http.ResponseWriter, r *http.Request) {
 	var input model.ScheduleRegisterInput
 
 	decoder := json.NewDecoder(r.Body)
@@ -40,14 +41,18 @@ func (api *ScheduleApi) RegisterSchedule(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	writeJSON(w, sched)
 }
 
-func (api *ScheduleApi) PauseSchedule(w http.ResponseWriter, r *http.Request) {
+func (api *ScheduleApiHandler) PauseSchedule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	sched, err := api.svc.PauseSchedule(vars["id"])
+	sched, err := api.svc.PauseSchedule(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -56,10 +61,15 @@ func (api *ScheduleApi) PauseSchedule(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, sched)
 }
 
-func (api *ScheduleApi) ResumeSchedule(w http.ResponseWriter, r *http.Request) {
+func (api *ScheduleApiHandler) ResumeSchedule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	sched, err := api.svc.ResumeSchedule(vars["id"])
+	sched, err := api.svc.ResumeSchedule(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -67,10 +77,16 @@ func (api *ScheduleApi) ResumeSchedule(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, sched)
 }
 
-func (api *ScheduleApi) TriggerSchedule(w http.ResponseWriter, r *http.Request) {
+func (api *ScheduleApiHandler) TriggerSchedule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	sched, err := api.svc.TriggerSchedule(vars["id"])
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sched, err := api.svc.TriggerSchedule(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -78,10 +94,16 @@ func (api *ScheduleApi) TriggerSchedule(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, sched)
 }
 
-func (api *ScheduleApi) GetSchedule(w http.ResponseWriter, r *http.Request) {
+func (api *ScheduleApiHandler) GetSchedule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	sched, err := api.svc.GetSchedule(vars["id"])
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sched, err := api.svc.GetSchedule(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -94,10 +116,16 @@ func (api *ScheduleApi) GetSchedule(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, sched)
 }
 
-func (api *ScheduleApi) DeleteSchedule(w http.ResponseWriter, r *http.Request) {
+func (api *ScheduleApiHandler) DeleteSchedule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	err := api.svc.DeleteSchedule(vars["id"])
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = api.svc.DeleteSchedule(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -106,9 +134,9 @@ func (api *ScheduleApi) DeleteSchedule(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted) // TODO: write json error
 }
 
-func (api *ScheduleApi) ListSchedules(w http.ResponseWriter, r *http.Request) {
-	schedules := make([]*model.Schedule, 0)
-	err := api.svc.IterSchedules(func(s *model.Schedule) error {
+func (api *ScheduleApiHandler) ListSchedules(w http.ResponseWriter, r *http.Request) {
+	schedules := make([]*model.CronSchedule, 0)
+	err := api.svc.IterSchedules(func(s *model.CronSchedule) error {
 		schedules = append(schedules, s)
 		return nil
 	})
@@ -117,6 +145,31 @@ func (api *ScheduleApi) ListSchedules(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, schedules)
+}
+
+func (api *ScheduleApiHandler) GetHistory(w http.ResponseWriter, r *http.Request) {
+	statuses, err := api.svc.GetHistory()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, statuses)
+}
+
+func (api *ScheduleApiHandler) GetCronHistory(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	statuses, err := api.svc.GetCronHistory(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, statuses)
 }
 
 func writeJSON(w http.ResponseWriter, body any) {
