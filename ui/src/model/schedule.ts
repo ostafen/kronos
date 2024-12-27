@@ -3,7 +3,7 @@ export default interface Schedule {
   title: string;
   status: ScheduleStatus;
   description: string;
-  cronExpr: string;
+  cronExpr?: string;
   url: string;
   metadata: unknown;
   isRecurring: boolean;

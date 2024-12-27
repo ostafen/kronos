@@ -1,8 +1,8 @@
-import ButtonLink from '@/components/atoms/ButtonLink/ButtonLink';
-import SchedulesTable from '../components/molecules/table/SchedulesTable';
-import useFetchSchedules from '@/hooks/use-fetch-schedules';
-import { Container, Heading } from '@chakra-ui/react';
-import { FiPlus } from 'react-icons/fi';
+import ButtonLink from "@/components/atoms/ButtonLink/ButtonLink";
+import SchedulesTable from "@/components/molecules/ScheduleListTable/ScheduleListTable";
+import useFetchSchedules from "@/hooks/use-fetch-schedules";
+import { Container, Heading } from "@chakra-ui/react";
+import { FiPlus } from "react-icons/fi";
 
 export default function HomePage() {
   const schedules = useFetchSchedules();
