@@ -3,14 +3,23 @@ package cron
 import (
 	"time"
 
-	"github.com/adhocore/gronx"
+	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 )
 
-func NextTickAfter(cronExpr string, start time.Time, includeStart bool) time.Time {
-	t, err := gronx.NextTickAfter(cronExpr, start, includeStart)
+var parser = cron.NewParser(
+	cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow,
+)
+
+func Next(cronExpr string, start time.Time) time.Time {
+	s, err := parser.Parse(cronExpr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return t
+	return s.Next(start)
+}
+
+func IsValid(cronExpr string) bool {
+	_, err := parser.Parse(cronExpr)
+	return err == nil
 }
