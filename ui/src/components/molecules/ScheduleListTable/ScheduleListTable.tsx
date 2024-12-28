@@ -5,11 +5,18 @@ import {
   ColorPalette,
   Table as ChakraTable,
   IconButton,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { ReactNode } from "react";
 import { FaRegTrashCan } from "react-icons/fa6";
+import ConfirmDialog, {
+  dialogClose$,
+  dialogConfirm$,
+  dialogReset$,
+} from "../ConfirmDialog/ConfirmDialog";
+import { take } from "rxjs/operators";
 
 interface SchedulesTableProps {
   schedules: Schedule[];
@@ -20,45 +27,78 @@ export default function SchedulesTable(props: SchedulesTableProps) {
 
   const deleteSchedule = useDeleteSchedule();
   const queryClient = useQueryClient();
+  const { open, onOpen, onClose } = useDisclosure({ defaultOpen: false });
 
-  const handleRemoveSchedule = async (id: string) => {
+  const handleDeleteSchedule = async (id: string) => {
     await deleteSchedule.mutateAsync(id);
-    queryClient.invalidateQueries({ queryKey: ["schedules"] });
+    await queryClient.invalidateQueries({ queryKey: ["schedules"] });
+  };
+
+  const initDeleteFlow = async (scheduleId: string) => {
+    onOpen();
+
+    try {
+      await new Promise((resolve, reject) => {
+        dialogConfirm$
+          .pipe(take(1))
+          .subscribe(() => resolve({ status: "confirmed" }));
+
+        dialogClose$
+          .pipe(take(1))
+          .subscribe(() => reject({ status: "canceled" }));
+      });
+
+      await handleDeleteSchedule(scheduleId);
+
+      dialogReset$.next();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      onClose();
+    }
   };
 
   return (
-    <ChakraTable.Root>
-      <ChakraTable.Header>
-        <ChakraTable.Row>
-          {scheduleFields.map((field) => (
-            <ChakraTable.ColumnHeader key={field.key}>
-              {field.value}
-            </ChakraTable.ColumnHeader>
-          ))}
-          <ChakraTable.ColumnHeader>Actions</ChakraTable.ColumnHeader>
-        </ChakraTable.Row>
-      </ChakraTable.Header>
-      <ChakraTable.Body>
-        {schedules.map((schedule) => (
-          <ChakraTable.Row key={schedule.id}>
+    <>
+      <ConfirmDialog
+        title="Delete schedule"
+        content={<p>Do you really want to delete this schedule?</p>}
+        isOpen={open}
+      />
+
+      <ChakraTable.Root>
+        <ChakraTable.Header>
+          <ChakraTable.Row>
             {scheduleFields.map((field) => (
-              <ChakraTable.Cell key={`${schedule.id}-${field.key}`}>
-                {format(schedule, field)}
-              </ChakraTable.Cell>
+              <ChakraTable.ColumnHeader key={field.key}>
+                {field.value}
+              </ChakraTable.ColumnHeader>
             ))}
-            <ChakraTable.Cell>
-              <IconButton
-                onClick={() => handleRemoveSchedule(schedule.id)}
-                variant="ghost"
-                aria-label="Delete"
-              >
-                <FaRegTrashCan />
-              </IconButton>
-            </ChakraTable.Cell>
+            <ChakraTable.ColumnHeader>Actions</ChakraTable.ColumnHeader>
           </ChakraTable.Row>
-        ))}
-      </ChakraTable.Body>
-    </ChakraTable.Root>
+        </ChakraTable.Header>
+        <ChakraTable.Body>
+          {schedules.map((schedule) => (
+            <ChakraTable.Row key={schedule.id}>
+              {scheduleFields.map((field) => (
+                <ChakraTable.Cell key={`${schedule.id}-${field.key}`}>
+                  {format(schedule, field)}
+                </ChakraTable.Cell>
+              ))}
+              <ChakraTable.Cell>
+                <IconButton
+                  onClick={() => initDeleteFlow(schedule.id)}
+                  variant="ghost"
+                  aria-label="Delete"
+                >
+                  <FaRegTrashCan />
+                </IconButton>
+              </ChakraTable.Cell>
+            </ChakraTable.Row>
+          ))}
+        </ChakraTable.Body>
+      </ChakraTable.Root>
+    </>
   );
 }
 

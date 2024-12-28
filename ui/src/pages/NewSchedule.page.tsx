@@ -38,9 +38,10 @@ export default function NewSchedulePage() {
     try {
       await createSchedule.mutateAsync({
         ...otherData,
-        isRecurring: isRecurring || false,
+        isRecurring,
         ...(isRecurring
           ? {
+              cronExpr,
               ...(startAt && { startAt: `${startAt}:00+01:00` }),
               ...(endAt && { endAt: `${endAt}:00+01:00` }),
             }
