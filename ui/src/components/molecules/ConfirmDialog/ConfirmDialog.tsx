@@ -1,61 +1,77 @@
-import { Button } from "@/components/chakra/button";
+import {Button} from "@/components/chakra/button";
 import {
-  DialogBody,
-  DialogCloseTrigger,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogRoot,
-  DialogTitle,
+    DialogBody,
+    DialogCloseTrigger,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogRoot,
+    DialogTitle,
 } from "@/components/chakra/dialog";
-import { DialogActionTrigger } from "@chakra-ui/react";
-import { ReactNode, useEffect, useState } from "react";
-import { Subject } from "rxjs";
+import {DialogActionTrigger} from "@chakra-ui/react";
+import {useEffect, useState} from "react";
+import {dialogClose$, dialogConfirm$, dialogOpen$, dialogReset$} from "@/utils/modal.ts";
+import DialogData from "@/model/dialog-data.ts";
 
-interface ConfirmDialogProps {
-  title: string;
-  content: ReactNode;
-  isOpen: boolean;
-}
 
-export const dialogClose$ = new Subject<void>();
-export const dialogConfirm$ = new Subject<void>();
-export const dialogReset$ = new Subject<void>();
+export default function ConfirmDialog() {
+    const [isOpen, setIsOpen] = useState(false);
+    const [dialogData, setDialogData] = useState<DialogData | null>(null);
 
-export default function ConfirmDialog(props: ConfirmDialogProps) {
-  const [isConfirmed, setIsConfirmed] = useState(false);
-  const { title, content, isOpen } = props;
+    const handleConfirm = () => {
+        setDialogData(data => {
+            if (!data) throw new Error("Data is not defined");
+            return {...data, isConfirmed: true};
+        });
 
-  const handleConfirm = () => {
-    setIsConfirmed(true);
-    dialogConfirm$.next();
-  };
+        dialogConfirm$.sink.next();
+    };
 
-  const handleCancel = () => {
-    if (isConfirmed) return;
-    dialogClose$.next();
-  };
+    const handleCancel = () => {
+        if (dialogData?.isConfirmed) return;
+        setIsOpen(false);
+    };
 
-  useEffect(() => {
-    const sub = dialogReset$.subscribe(() => setIsConfirmed(false));
-    return () => sub.unsubscribe();
-  }, []);
+    useEffect(() => {
+        let timeoutId: number | null = null;
 
-  return (
-    <DialogRoot open={isOpen} onOpenChange={handleCancel} placement="center">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <DialogBody>{content}</DialogBody>
-        <DialogFooter>
-          <DialogActionTrigger asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogActionTrigger>
-          <Button onClick={handleConfirm}>Confirm</Button>
-        </DialogFooter>
-        <DialogCloseTrigger />
-      </DialogContent>
-    </DialogRoot>
-  );
+        const subs = [
+            dialogReset$.source$.subscribe(() => setDialogData(null)),
+            dialogClose$.source$.subscribe(() => {
+                setIsOpen(false);
+                timeoutId = window.setTimeout(() => {
+                    setDialogData(null);
+                    timeoutId = null;
+                }, 1000);
+            }),
+            dialogOpen$.source$.subscribe(dialogData => {
+                if (timeoutId) {
+                    window.clearTimeout(timeoutId);
+                }
+
+                setDialogData(dialogData);
+                setIsOpen(true);
+            }),
+        ];
+
+        return () => subs.forEach(sub => sub.unsubscribe());
+    }, []);
+
+    return (
+        <DialogRoot open={isOpen} onOpenChange={handleCancel} placement="center">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{dialogData?.title}</DialogTitle>
+                </DialogHeader>
+                <DialogBody>{dialogData?.content}</DialogBody>
+                <DialogFooter>
+                    <DialogActionTrigger asChild>
+                        <Button variant="outline">Cancel</Button>
+                    </DialogActionTrigger>
+                    <Button onClick={handleConfirm}>Confirm</Button>
+                </DialogFooter>
+                <DialogCloseTrigger/>
+            </DialogContent>
+        </DialogRoot>
+    );
 }

@@ -41,7 +41,7 @@ export default function SchedulesTable(props: SchedulesTableProps) {
                             <ChakraTable.Cell>
                                 <Flex>
                                     <DeleteScheduleTrigger
-                                        scheduleId={schedule.id}
+                                        id={schedule.id}
                                     />
                                     <IconButtonLink
                                         to={`/schedule/${schedule.id}`}

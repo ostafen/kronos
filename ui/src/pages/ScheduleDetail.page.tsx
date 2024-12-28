@@ -1,12 +1,10 @@
-import {Badge, Container, Flex, Heading, Text} from "@chakra-ui/react";
+import {Badge, Box, Container, Flex, Heading, Text} from "@chakra-ui/react";
 import {useNavigate, useParams} from "react-router";
 import useFetchSchedule from "@/hooks/use-fetch-schedule.ts";
 import {FiChevronRight} from "react-icons/fi";
 import ChakraBreadcrumbLink from "@/components/atoms/ChakraBreadcrumbLink/ChakraBreadcrumbLink.tsx";
 import {BreadcrumbCurrentLink, BreadcrumbRoot} from "@/components/chakra/breadcrumb.tsx";
 import ScheduleStatusBadge from "@/components/atoms/ScheduleStatusBadge/ScheduleStatusBadge.tsx";
-import IconButtonLink from "@/components/atoms/IconButtonLink/IconButtonLink.tsx";
-import {RiExternalLinkLine} from "react-icons/ri";
 import formatDate from "@/utils/format-date.ts";
 import DeleteScheduleTrigger from "@/components/molecules/DeleteScheduleTrigger/DeleteScheduleTrigger.tsx";
 
@@ -35,6 +33,7 @@ export default function ScheduleDetailPage() {
         url
     } = schedule.data;
 
+
     return (
         <Container mt="10">
             <BreadcrumbRoot separator={<FiChevronRight/>} variant="underline">
@@ -42,35 +41,30 @@ export default function ScheduleDetailPage() {
                 <BreadcrumbCurrentLink>Schedule Detail</BreadcrumbCurrentLink>
             </BreadcrumbRoot>
 
-            <Flex direction="column" mt="10" gap="3">
-                <Flex gap="3" align="center">
-                    <Heading fontSize="2rem">{title}</Heading>
-                    <IconButtonLink variant="plain" minW={0} to={url}>
-                        <RiExternalLinkLine/>
-                    </IconButtonLink>
-                </Flex>
-                <Flex gap="2" alignItems="center" flexWrap="wrap" maxW={{base: "100%", lg: "60%"}}>
+            <Flex direction="column" mt="8" gap="3">
+                <Heading fontSize="2rem">{title}</Heading>
+                <Flex gap="2" mt="3" alignItems="center" flexWrap="wrap">
                     <Badge title="Schedule unique id" colorPalette="orange">{id}</Badge>
                     <ScheduleStatusBadge alignSelf="flex-start" status={status}/>
-                    {isRecurring && <Badge colorPalette="purple">Recurring</Badge>}
-                    {cronExpr && <Badge colorPalette="red">{cronExpr}</Badge>}
+                    {isRecurring && (<>
+                        <Badge colorPalette="purple">Recurring</Badge>
+                        {cronExpr && <Badge title="Cron expression" colorPalette="red">{cronExpr}</Badge>}
+                    </>)}
+                    <Badge title="Webhook URL" colorPalette="pink">{url}</Badge>
                     <Badge colorPalette="cyan">Created at {formatDate(createdAt)}</Badge>
                     {runAt && new Date(runAt).getFullYear() > 1 &&
                         <Badge colorPalette="cyan">Run at {formatDate(runAt)}</Badge>}
-                    {startAt && <Badge colorPalette="cyan">Start at {formatDate(startAt)}</Badge>}
-                    {endAt && <Badge colorPalette="cyan">End at {formatDate(endAt)}</Badge>}
+                    {isRecurring && (<>
+                        {startAt && <Badge colorPalette="cyan">Start at {formatDate(startAt)}</Badge>}
+                        {endAt && <Badge colorPalette="cyan">End at {formatDate(endAt)}</Badge>}
+                    </>)}
                 </Flex>
 
-                <Flex mt="1" mb="6" gap="4">
-                    <DeleteScheduleTrigger
-                        onSuccess={() => navigate('/')}
-                        scheduleId={id}
-                        colorPalette="red"
-                        variant="plain"
-                    >
-                        Delete schedule
-                    </DeleteScheduleTrigger>
+                <Flex gap="4">
+                    <DeleteScheduleTrigger id={id}/>
                 </Flex>
+
+                <Box as="hr" mb="6"/>
 
                 <Text>{description}</Text>
 
