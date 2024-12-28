@@ -1,161 +1,97 @@
-import useDeleteSchedule from "@/hooks/use-delete-schedule";
-import Schedule, { ScheduleStatus } from "@/model/schedule";
-import {
-  Badge,
-  ColorPalette,
-  Table as ChakraTable,
-  IconButton,
-  useDisclosure,
-} from "@chakra-ui/react";
-import { useQueryClient } from "@tanstack/react-query";
+import Schedule from "@/model/schedule";
+import {Flex, Table as ChakraTable,} from "@chakra-ui/react";
 import dayjs from "dayjs";
-import { ReactNode } from "react";
-import { FaRegTrashCan } from "react-icons/fa6";
-import ConfirmDialog, {
-  dialogClose$,
-  dialogConfirm$,
-  dialogReset$,
-} from "../ConfirmDialog/ConfirmDialog";
-import { take } from "rxjs/operators";
+import {ReactNode} from "react";
+import {FaRegArrowAltCircleRight} from "react-icons/fa";
+import IconButtonLink from "@/components/atoms/IconButtonLink/IconButtonLink.tsx";
+import ScheduleStatusBadge from "@/components/atoms/ScheduleStatusBadge/ScheduleStatusBadge.tsx";
+import DeleteScheduleTrigger from "@/components/molecules/DeleteScheduleTrigger/DeleteScheduleTrigger.tsx";
 
 interface SchedulesTableProps {
-  schedules: Schedule[];
+    schedules: Schedule[];
 }
 
 export default function SchedulesTable(props: SchedulesTableProps) {
-  const { schedules } = props;
+    const {schedules} = props;
 
-  const deleteSchedule = useDeleteSchedule();
-  const queryClient = useQueryClient();
-  const { open, onOpen, onClose } = useDisclosure({ defaultOpen: false });
 
-  const handleDeleteSchedule = async (id: string) => {
-    await deleteSchedule.mutateAsync(id);
-    await queryClient.invalidateQueries({ queryKey: ["schedules"] });
-  };
+    return (
+        <>
 
-  const initDeleteFlow = async (scheduleId: string) => {
-    onOpen();
 
-    try {
-      await new Promise((resolve, reject) => {
-        dialogConfirm$
-          .pipe(take(1))
-          .subscribe(() => resolve({ status: "confirmed" }));
-
-        dialogClose$
-          .pipe(take(1))
-          .subscribe(() => reject({ status: "canceled" }));
-      });
-
-      await handleDeleteSchedule(scheduleId);
-
-      dialogReset$.next();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      onClose();
-    }
-  };
-
-  return (
-    <>
-      <ConfirmDialog
-        title="Delete schedule"
-        content={<p>Do you really want to delete this schedule?</p>}
-        isOpen={open}
-      />
-
-      <ChakraTable.Root>
-        <ChakraTable.Header>
-          <ChakraTable.Row>
-            {scheduleFields.map((field) => (
-              <ChakraTable.ColumnHeader key={field.key}>
-                {field.value}
-              </ChakraTable.ColumnHeader>
-            ))}
-            <ChakraTable.ColumnHeader>Actions</ChakraTable.ColumnHeader>
-          </ChakraTable.Row>
-        </ChakraTable.Header>
-        <ChakraTable.Body>
-          {schedules.map((schedule) => (
-            <ChakraTable.Row key={schedule.id}>
-              {scheduleFields.map((field) => (
-                <ChakraTable.Cell key={`${schedule.id}-${field.key}`}>
-                  {format(schedule, field)}
-                </ChakraTable.Cell>
-              ))}
-              <ChakraTable.Cell>
-                <IconButton
-                  onClick={() => initDeleteFlow(schedule.id)}
-                  variant="ghost"
-                  aria-label="Delete"
-                >
-                  <FaRegTrashCan />
-                </IconButton>
-              </ChakraTable.Cell>
-            </ChakraTable.Row>
-          ))}
-        </ChakraTable.Body>
-      </ChakraTable.Root>
-    </>
-  );
+            <ChakraTable.Root>
+                <ChakraTable.Header>
+                    <ChakraTable.Row>
+                        {scheduleFields.map((field) => (
+                            <ChakraTable.ColumnHeader key={field.key}>
+                                {field.value}
+                            </ChakraTable.ColumnHeader>
+                        ))}
+                        <ChakraTable.ColumnHeader>Actions</ChakraTable.ColumnHeader>
+                    </ChakraTable.Row>
+                </ChakraTable.Header>
+                <ChakraTable.Body>
+                    {schedules.map((schedule) => (
+                        <ChakraTable.Row key={schedule.id}>
+                            {scheduleFields.map((field) => (
+                                <ChakraTable.Cell key={`${schedule.id}-${field.key}`}>
+                                    {format(schedule, field)}
+                                </ChakraTable.Cell>
+                            ))}
+                            <ChakraTable.Cell>
+                                <Flex>
+                                    <DeleteScheduleTrigger
+                                        scheduleId={schedule.id}
+                                    />
+                                    <IconButtonLink
+                                        to={`/schedule/${schedule.id}`}
+                                        title="View schedule detail"
+                                        aria-label="View schedule detail"
+                                        variant="ghost"
+                                    >
+                                        <FaRegArrowAltCircleRight/>
+                                    </IconButtonLink>
+                                </Flex>
+                            </ChakraTable.Cell>
+                        </ChakraTable.Row>
+                    ))}
+                </ChakraTable.Body>
+            </ChakraTable.Root>
+        </>
+    );
 }
 
 function format(schedule: Schedule, field: ScheduleField) {
-  const value = schedule[field.key]?.toString() || "";
+    const value = schedule[field.key]?.toString() || "";
 
-  if (field.format) {
-    return field.format(value);
-  }
+    if (field.format) {
+        return field.format(value);
+    }
 
-  return value;
+    return value;
 }
 
 const scheduleFields: ScheduleField[] = [
-  { key: "title", value: "Title" },
-  { key: "description", value: "Description" },
-  { key: "status", value: "Status", format: statusFormat },
-  { key: "createdAt", value: "Created at", format: dateFormat },
-  { key: "runAt", value: "Run at", format: dateFormat },
-  { key: "startAt", value: "Start at", format: dateFormat },
-  { key: "endAt", value: "End at", format: dateFormat },
+    {key: "title", value: "Title"},
+    {key: "description", value: "Description"},
+    {key: "status", value: "Status", format: statusFormat},
+    {key: "createdAt", value: "Created at", format: dateFormat},
+    {key: "runAt", value: "Run at", format: dateFormat},
+    {key: "startAt", value: "Start at", format: dateFormat},
+    {key: "endAt", value: "End at", format: dateFormat},
 ];
 
 type ScheduleField = {
-  key: keyof Schedule;
-  value: string;
-  format?: (v: string) => ReactNode | string;
+    key: keyof Schedule;
+    value: string;
+    format?: (v: string) => ReactNode | string;
 };
 
 function dateFormat(value: string): string {
-  return dayjs(value).format("DD/MM/YYYY HH:mm:ss");
+    return dayjs(value).format("DD/MM/YYYY HH:mm:ss");
 }
 
-const SCHEDULE_STATUSES = ["not_started", "active", "paused", "expired"];
-
-function isScheduleStatus(value: string): value is ScheduleStatus {
-  return SCHEDULE_STATUSES.includes(value);
+function statusFormat(status: string) {
+    return <ScheduleStatusBadge status={status}/>;
 }
 
-const statusBadgeColorMap: Record<ScheduleStatus, ColorPalette> = {
-  not_started: "gray",
-  active: "green",
-  paused: "yellow",
-  expired: "red",
-};
-
-function statusFormat(status: string): ReactNode {
-  if (!isScheduleStatus(status)) {
-    return status;
-  }
-
-  return (
-    <Badge
-      textTransform="capitalize"
-      colorPalette={statusBadgeColorMap[status]}
-    >
-      {status}
-    </Badge>
-  );
-}

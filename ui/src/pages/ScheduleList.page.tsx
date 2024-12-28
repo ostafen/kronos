@@ -4,7 +4,7 @@ import useFetchSchedules from "@/hooks/use-fetch-schedules";
 import { Container, Heading } from "@chakra-ui/react";
 import { FiPlus } from "react-icons/fi";
 
-export default function HomePage() {
+export default function ScheduleListPage() {
   const schedules = useFetchSchedules();
 
   return (
