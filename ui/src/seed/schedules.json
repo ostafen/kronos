@@ -155,7 +155,7 @@
     "isRecurring": true,
     "startAt": "2025-01-01T23:00:00+01:00",
     "endAt": "2025-01-01T23:30:00+01:00",
-    "cronExpr": "0 23 * * 6#3"
+    "cronExpr": "0 23 * * 6"
   },
   {
     "title": "End of Day Reports",
@@ -173,7 +173,6 @@
     "isRecurring": false,
     "runAt": "2025-02-01T09:00:00+01:00"
   },
-
   {
     "title": "Data Sync",
     "description": "Synchronize data between different databases.",
@@ -199,7 +198,7 @@
     "isRecurring": true,
     "startAt": "2025-01-01T12:00:00+01:00",
     "endAt": "2025-01-01T12:30:00+01:00",
-    "cronExpr": "0 12 * * 5#5"
+    "cronExpr": "0 12 * * 5"
   },
   {
     "title": "Backup Verification",
@@ -289,7 +288,7 @@
     "isRecurring": true,
     "startAt": "2025-01-01T22:00:00+01:00",
     "endAt": "2025-01-01T23:00:00+01:00",
-    "cronExpr": "0 22 * * 5#3"
+    "cronExpr": "0 22 * * 5"
   },
   {
     "title": "Data Compression",
@@ -350,6 +349,6 @@
     "isRecurring": true,
     "startAt": "2025-01-01T05:00:00+01:00",
     "endAt": "2025-01-01T05:30:00+01:00",
-    "cronExpr": "0 5 * * 7"
+    "cronExpr": "0 5 * * 0"
   }
 ]

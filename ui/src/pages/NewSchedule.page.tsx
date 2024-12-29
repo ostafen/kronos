@@ -1,4 +1,4 @@
-import {Container, Heading, Stack} from "@chakra-ui/react";
+import {Heading, Stack} from "@chakra-ui/react";
 import ChakraBreadcrumbLink from "@/components/atoms/ChakraBreadcrumbLink/ChakraBreadcrumbLink";
 import {BreadcrumbCurrentLink, BreadcrumbRoot,} from "@/components/chakra/breadcrumb";
 import {Button} from "@/components/chakra/button";
@@ -54,7 +54,7 @@ export default function NewSchedulePage() {
     };
 
     return (
-        <Container>
+        <>
             <BreadcrumbRoot separator={<FiChevronRight/>} variant="underline">
                 <ChakraBreadcrumbLink to="/">Home</ChakraBreadcrumbLink>
                 <BreadcrumbCurrentLink>New Schedule</BreadcrumbCurrentLink>
@@ -72,6 +72,6 @@ export default function NewSchedulePage() {
                     </Stack>
                 </form>
             </FormProvider>
-        </Container>
+        </>
     );
 }

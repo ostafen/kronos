@@ -25,41 +25,44 @@ export default function ScheduleCardList(props: ScheduleCardListProps) {
 
     return (
         <>
-            <Fieldset.Root>
-                <CheckboxGroup onValueChange={schedules => setCheckedSchedules(schedules)}>
-                    <Fieldset.Legend fontSize="sm" mb="2">
-                        Select schedules
-                    </Fieldset.Legend>
-                    <Grid templateColumns={{base: "1fr", md: "1fr 1fr", lg: "repeat(3, 1fr)"}} gap="4">
-                        {schedules.map((schedule) => (
-                            <GridItem key={schedule.id}>
-                                <CheckboxCard
-                                    variant="surface"
-                                    colorPalette="blue"
-                                    h="100%"
-                                    label={schedule.title}
-                                    description={schedule.description}
-                                    value={schedule.id}
-                                    addon={<Flex justify="space-between" align="center">
-                                        <ButtonLink variant="plain"
-                                                    p={0}
-                                                    to={`/schedule/${schedule.id}`}>Open</ButtonLink>
-                                        <HStack>
-                                            {schedule.isRecurring && (
-                                                <>
-                                                    <Badge colorPalette="purple">Recurring</Badge>
-                                                    <Badge colorPalette="blue">{schedule.cronExpr}</Badge>
-                                                </>
-                                            )}
-                                            <ScheduleStatusBadge status={schedule.status}/>
-                                        </HStack>
-                                    </Flex>}
-                                />
-                            </GridItem>
-                        ))}
-                    </Grid>
-                </CheckboxGroup>
-            </Fieldset.Root>
+
+            {schedules.length > 0 && (
+                <Fieldset.Root>
+                    <CheckboxGroup onValueChange={schedules => setCheckedSchedules(schedules)}>
+                        <Fieldset.Legend fontSize="sm" mb="2">
+                            Schedules
+                        </Fieldset.Legend>
+                        <Grid templateColumns={{base: "1fr", md: "1fr 1fr", lg: "repeat(3, 1fr)"}} gap="4">
+                            {schedules.map((schedule) => (
+                                <GridItem key={schedule.id}>
+                                    <CheckboxCard
+                                        variant="outline"
+                                        colorPalette="purple"
+                                        h="100%"
+                                        label={schedule.title}
+                                        description={schedule.description}
+                                        value={schedule.id}
+                                        addon={<Flex justify="space-between" align="center">
+                                            <ButtonLink variant="plain"
+                                                        p={0}
+                                                        to={`/schedule/${schedule.id}`}>Open</ButtonLink>
+                                            <HStack>
+                                                {schedule.isRecurring && (
+                                                    <>
+                                                        <Badge colorPalette="purple">Recurring</Badge>
+                                                        <Badge colorPalette="blue">{schedule.cronExpr}</Badge>
+                                                    </>
+                                                )}
+                                                <ScheduleStatusBadge status={schedule.status}/>
+                                            </HStack>
+                                        </Flex>}
+                                    />
+                                </GridItem>
+                            ))}
+                        </Grid>
+                    </CheckboxGroup>
+                </Fieldset.Root>
+            )}
 
             <ActionBarRoot open={checkedSchedules.length > 0}>
                 <ActionBarContent>

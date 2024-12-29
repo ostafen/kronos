@@ -1,4 +1,4 @@
-import {Badge, Box, Container, Flex, Heading, Text} from "@chakra-ui/react";
+import {Badge, Box, Flex, Heading, Text} from "@chakra-ui/react";
 import {useNavigate, useParams} from "react-router";
 import useFetchSchedule from "@/hooks/use-fetch-schedule.ts";
 import {FiChevronRight} from "react-icons/fi";
@@ -35,7 +35,7 @@ export default function ScheduleDetailPage() {
 
 
     return (
-        <Container mt="10">
+        <>
             <BreadcrumbRoot separator={<FiChevronRight/>} variant="underline">
                 <ChakraBreadcrumbLink to="/">Home</ChakraBreadcrumbLink>
                 <BreadcrumbCurrentLink>Schedule Detail</BreadcrumbCurrentLink>
@@ -70,6 +70,6 @@ export default function ScheduleDetailPage() {
 
                 {metadata && <pre>{JSON.stringify(metadata, null, 2)}</pre>}
             </Flex>
-        </Container>
+        </>
     );
 }
