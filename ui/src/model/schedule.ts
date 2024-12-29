@@ -3,9 +3,9 @@ export default interface Schedule {
     title: string;
     status: ScheduleStatus;
     description: string;
-    cronExpr: string;
+    cronExpr?: string;
     url: string;
-    metadata: unknown;
+    metadata: string;
     isRecurring: boolean;
     createdAt: string;
     runAt: string;
@@ -13,4 +13,9 @@ export default interface Schedule {
     endAt: string;
 }
 
-export type ScheduleStatus = 'not_started' | 'active' | 'paused' | 'expired'
+export type ScheduleStatus = "not_started" | "active" | "paused" | "expired";
+
+export type NewSchedule = Omit<
+    Partial<Schedule>,
+    "id" | "status" | "createdAt"
+>;

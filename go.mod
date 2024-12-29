@@ -1,9 +1,5 @@
 module github.com/ostafen/kronos
 
-go 1.22
-
-toolchain go1.23.1
-
 require (
 	github.com/go-playground/validator/v10 v10.11.2
 	github.com/google/btree v1.0.0
@@ -48,3 +44,5 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+go 1.23.4

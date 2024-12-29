@@ -1,0 +1,62 @@
+[
+  {
+    "order": 1,
+    "name": "title",
+    "isRequired": true,
+    "label": "Title",
+    "type": "input-text"
+  },
+  {
+    "order": 2,
+    "name": "description",
+    "isRequired": false,
+    "label": "Description",
+    "type": "textarea"
+  },
+  {
+    "order": 3,
+    "name": "url",
+    "label": "Webhook URL",
+    "isRequired": true,
+    "type": "input-url"
+  },
+  {
+    "order": 4,
+    "name": "isRecurring",
+    "label": "Is recurring",
+    "type": "checkbox",
+    "isRequired": false
+  },
+  {
+    "order": 5,
+    "name": "runAt",
+    "label": "Run at",
+    "type": "input-datetime-local",
+    "isRequired": true,
+    "when": "not-recurring"
+  },
+  {
+    "order": 5,
+    "name": "cronExpr",
+    "label": "Cron expression",
+    "type": "input-cron",
+    "isRequired": true,
+    "when": "recurring"
+  },
+  {
+    "order": 6,
+    "name": "startAt",
+    "label": "Start at",
+    "type": "input-datetime-local",
+    "isRequired": true,
+    "when": "recurring"
+  },
+  {
+    "order": 7,
+    "name": "endAt",
+    "label": "End at",
+    "type": "input-datetime-local",
+    "isRequired": true,
+    "when": "recurring"
+  }
+]
