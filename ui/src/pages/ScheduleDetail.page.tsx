@@ -61,7 +61,7 @@ export default function ScheduleDetailPage() {
                 </Flex>
 
                 <Flex gap="4">
-                    <DeleteScheduleTrigger id={id}/>
+                    <DeleteScheduleTrigger scheduleId={id}/>
                 </Flex>
 
                 <Box as="hr" mb="6"/>

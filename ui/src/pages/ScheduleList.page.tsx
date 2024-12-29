@@ -1,14 +1,14 @@
 import ButtonLink from "@/components/atoms/ButtonLink/ButtonLink";
-import SchedulesTable from "@/components/molecules/ScheduleListTable/ScheduleListTable";
 import useFetchSchedules from "@/hooks/use-fetch-schedules";
 import {Container, Heading} from "@chakra-ui/react";
 import {FiPlus} from "react-icons/fi";
+import ScheduleCardList from "@/components/molecules/ScheduleCardList/ScheduleCardList.tsx";
 
 export default function ScheduleListPage() {
     const schedules = useFetchSchedules();
 
     return (
-        <Container mt="10">
+        <Container mt="10" mb="20">
             <Heading as="h1" fontSize="2rem" mb="6">
                 Schedule List
             </Heading>
@@ -16,7 +16,7 @@ export default function ScheduleListPage() {
                 <FiPlus/>
                 New schedule
             </ButtonLink>
-            <SchedulesTable schedules={schedules.data || []}/>
+            <ScheduleCardList schedules={schedules.data || []}/>
         </Container>
     );
 }

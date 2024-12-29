@@ -1,4 +1,4 @@
-FROM golang:1.19-buster AS build
+FROM golang:1.23.4-bullseye AS build
 
 ARG VERSION
 ARG COMMIT
