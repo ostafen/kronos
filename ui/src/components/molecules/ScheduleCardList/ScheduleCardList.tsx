@@ -17,7 +17,7 @@ import {
   ActionBarSeparator,
 } from '@/components/chakra/action-bar.tsx';
 import { Button } from '@/components/chakra/button.tsx';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import DeleteScheduleTrigger from '@/components/molecules/DeleteScheduleTrigger/DeleteScheduleTrigger.tsx';
 import { GrTrigger } from 'react-icons/gr';
 import ScheduleStatusBadge from '@/components/atoms/ScheduleStatusBadge/ScheduleStatusBadge.tsx';
@@ -29,14 +29,42 @@ interface ScheduleCardListProps {
 
 export default function ScheduleCardList(props: ScheduleCardListProps) {
   const { schedules } = props;
-  const [checkedSchedules, setCheckedSchedules] = useState<string[]>([]);
+  const [checkedSchedulesIds, setCheckedSchedulesIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCheckedSchedulesIds([]);
+    }, 200);
+  }, [schedules]);
+
+  const checkedSchedules: Schedule[] = useMemo(() => {
+    const scheduleMap = schedules.reduce(
+      (acc, schedule) => ({
+        ...acc,
+        [schedule.id]: schedule,
+      }),
+      {}
+    );
+
+    return checkedSchedulesIds
+      .map((id) => scheduleMap[id as keyof typeof scheduleMap])
+      .filter(Boolean);
+  }, [schedules, checkedSchedulesIds]);
+
+  const isPauseButtonDisabled = checkedSchedules.some(
+    (schedule) => !schedule.isRecurring || schedule.status === 'paused'
+  );
+  const isResumeButtonDisabled = checkedSchedules.some(
+    (schedule) => !schedule.isRecurring || schedule.status === 'active'
+  );
 
   return (
     <>
       {schedules.length > 0 && (
         <Fieldset.Root>
           <CheckboxGroup
-            onValueChange={(schedules) => setCheckedSchedules(schedules)}
+            value={checkedSchedulesIds}
+            onValueChange={(schedules) => setCheckedSchedulesIds(schedules)}
           >
             <Fieldset.Legend textAlign="left" fontSize="sm" mb="2">
               Schedules
@@ -93,26 +121,26 @@ export default function ScheduleCardList(props: ScheduleCardListProps) {
         </Fieldset.Root>
       )}
 
-      <ActionBarRoot open={checkedSchedules.length > 0}>
+      <ActionBarRoot open={checkedSchedulesIds.length > 0}>
         <ActionBarContent>
           <ActionBarSelectionTrigger>
-            {checkedSchedules.length} selected
+            {checkedSchedulesIds.length} selected
           </ActionBarSelectionTrigger>
           <ActionBarSeparator />
           <DeleteScheduleTrigger
             colorPalette="black"
             variant="outline"
             size="sm"
-            scheduleId={checkedSchedules}
+            scheduleId={checkedSchedulesIds}
           >
             <LuTrash2 />
             Delete
           </DeleteScheduleTrigger>
-          <Button variant="outline" size="sm">
+          <Button disabled={isPauseButtonDisabled} variant="outline" size="sm">
             <LuPause />
             Pause
           </Button>
-          <Button variant="outline" size="sm">
+          <Button disabled={isResumeButtonDisabled} variant="outline" size="sm">
             <LuPlay />
             Resume
           </Button>

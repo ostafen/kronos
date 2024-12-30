@@ -9,6 +9,7 @@ import formFields from '@/assets/new-schedule.json';
 import FormField from '@/model/form-field.ts';
 import { useEffect } from 'react';
 import { isDialogOpen$ } from '@/utils/modal.ts';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function NewScheduleTrigger() {
   const form = useForm<NewSchedule>({
@@ -24,6 +25,7 @@ export default function NewScheduleTrigger() {
     },
   });
 
+  const queryClient = useQueryClient();
   const fields = formFields as FormField[];
   const createSchedule = useCreateSchedule();
 
@@ -73,6 +75,9 @@ export default function NewScheduleTrigger() {
   return (
     <DialogActionTrigger
       onConfirm={form.handleSubmit(submitHandler)}
+      onSuccess={() =>
+        queryClient.invalidateQueries({ queryKey: ['schedules'] })
+      }
       dialogData={dialogData}
     >
       <FiPlus aria-hidden="true" />

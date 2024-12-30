@@ -7,7 +7,7 @@ import seedDatabase from '@/seed/seed.js';
 import { keyframes } from '@emotion/react';
 import GradientText from '@/components/atoms/GradientText/GradientText.tsx';
 import FadeInBox from '@/components/atoms/FadeInBox/FadeInBox.tsx';
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useMemo } from 'react';
 import AppContext from '@/context/App.context.tsx';
 import NewScheduleTrigger from '@/components/molecules/NewScheduleTrigger/NewScheduleTrigger.tsx';
 
@@ -23,6 +23,13 @@ const shinyBar = keyframes`
 
 export default function ScheduleListPage() {
   const schedules = useFetchSchedules();
+
+  const sortedSchedules = useMemo(() => {
+    return [...(schedules?.data || [])].sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [schedules?.data]);
+
   const queryClient = useQueryClient();
 
   const { state, dispatch } = useContext(AppContext);
@@ -144,7 +151,7 @@ export default function ScheduleListPage() {
             boxShadow="0 0 1px 0 rgba(212,212,212,.8)"
             width="100%"
           />
-          <ScheduleCardList schedules={schedules.data || []} />
+          <ScheduleCardList schedules={sortedSchedules} />
         </FadeInBox>
       )}
     </FadeInBox>
