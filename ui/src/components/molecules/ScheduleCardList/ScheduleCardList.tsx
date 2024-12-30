@@ -29,13 +29,14 @@ export default function ScheduleCardList(props: ScheduleCardListProps) {
             {schedules.length > 0 && (
                 <Fieldset.Root>
                     <CheckboxGroup onValueChange={schedules => setCheckedSchedules(schedules)}>
-                        <Fieldset.Legend fontSize="sm" mb="2">
+                        <Fieldset.Legend textAlign="left" fontSize="sm" mb="2">
                             Schedules
                         </Fieldset.Legend>
                         <Grid templateColumns={{base: "1fr", md: "1fr 1fr", lg: "repeat(3, 1fr)"}} gap="4">
                             {schedules.map((schedule) => (
                                 <GridItem key={schedule.id}>
                                     <CheckboxCard
+                                        backgroundColor="white"
                                         variant="outline"
                                         colorPalette="purple"
                                         h="100%"
