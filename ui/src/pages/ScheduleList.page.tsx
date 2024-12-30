@@ -1,7 +1,5 @@
-import ButtonLink from '@/components/atoms/ButtonLink/ButtonLink';
 import useFetchSchedules from '@/hooks/use-fetch-schedules';
 import { Box, Button, Flex, Heading, Text } from '@chakra-ui/react';
-import { FiPlus } from 'react-icons/fi';
 import ScheduleCardList from '@/components/molecules/ScheduleCardList/ScheduleCardList.tsx';
 import { TbSeeding } from 'react-icons/tb';
 import { useQueryClient } from '@tanstack/react-query';
@@ -11,6 +9,7 @@ import GradientText from '@/components/atoms/GradientText/GradientText.tsx';
 import FadeInBox from '@/components/atoms/FadeInBox/FadeInBox.tsx';
 import { useContext, useEffect } from 'react';
 import AppContext from '@/context/App.context.tsx';
+import NewScheduleTrigger from '@/components/molecules/NewScheduleTrigger/NewScheduleTrigger.tsx';
 
 const shinyBar = keyframes`
     from {
@@ -94,7 +93,8 @@ export default function ScheduleListPage() {
         lineHeight="3.6rem"
         mb="10"
       >
-        <GradientText as="strong" fontWeight="700" text="Your" /> cron dashboard
+        <GradientText as="strong" fontWeight="700" text="Your" /> cron
+        dashboard.
       </FadeInBox>
 
       <FadeInBox isAnimationDisabled={isAnimationDisabled} animationDelay="3s">
@@ -107,15 +107,7 @@ export default function ScheduleListPage() {
               : 'Add a new cron job schedule ⏳👇'}
           </Text>
 
-          <ButtonLink
-            display="flex"
-            justifySelf="center"
-            aria-describedby="new-schedule-description"
-            to="/new-schedule"
-          >
-            <FiPlus aria-hidden="true" />
-            New schedule
-          </ButtonLink>
+          <NewScheduleTrigger />
         </Box>
 
         {noSchedules && (

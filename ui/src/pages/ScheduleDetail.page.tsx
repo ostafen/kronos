@@ -1,5 +1,4 @@
 import { Badge, Box, Flex, Heading, Text } from '@chakra-ui/react';
-import { useNavigate, useParams } from 'react-router';
 import useFetchSchedule from '@/hooks/use-fetch-schedule.ts';
 import { FiChevronRight } from 'react-icons/fi';
 import ChakraBreadcrumbLink from '@/components/atoms/ChakraBreadcrumbLink/ChakraBreadcrumbLink.tsx';
@@ -11,13 +10,14 @@ import ScheduleStatusBadge from '@/components/atoms/ScheduleStatusBadge/Schedule
 import formatDate from '@/utils/format-date.ts';
 import DeleteScheduleTrigger from '@/components/molecules/DeleteScheduleTrigger/DeleteScheduleTrigger.tsx';
 
-export default function ScheduleDetailPage() {
-  const { scheduleId } = useParams();
-  const navigate = useNavigate();
+export default function ScheduleDetailPage({
+  scheduleId,
+}: {
+  scheduleId: string;
+}) {
   const schedule = useFetchSchedule(scheduleId);
 
   if (!schedule.data || schedule.error) {
-    navigate('/');
     return null;
   }
 

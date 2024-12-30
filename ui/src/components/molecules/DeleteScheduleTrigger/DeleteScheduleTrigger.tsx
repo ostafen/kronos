@@ -2,7 +2,6 @@ import { FaRegTrashCan } from 'react-icons/fa6';
 import { useQueryClient } from '@tanstack/react-query';
 import useDeleteSchedule from '@/hooks/use-delete-schedule.ts';
 import DialogActionTrigger from '@/components/molecules/DialogActionTrigger/DialogActionTrigger.tsx';
-import { useNavigate } from 'react-router';
 import { PropsWithChildren } from 'react';
 import { IconButtonProps } from '@chakra-ui/react';
 
@@ -16,7 +15,6 @@ export default function DeleteScheduleTrigger(
   const { scheduleId, children, ...rest } = props;
   const deleteSchedule = useDeleteSchedule();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const handleDeleteSchedule = async (id: string | string[]) => {
     const scheduleIds = typeof id === 'string' ? [id] : id;
@@ -39,7 +37,6 @@ export default function DeleteScheduleTrigger(
         title: 'Delete schedule',
         content: <p>{content}</p>,
       }}
-      onSuccess={() => navigate('/')}
       onConfirm={() => handleDeleteSchedule(scheduleId)}
       {...rest}
     >

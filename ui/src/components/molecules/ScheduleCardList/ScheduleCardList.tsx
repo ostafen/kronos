@@ -20,8 +20,8 @@ import { Button } from '@/components/chakra/button.tsx';
 import { useState } from 'react';
 import DeleteScheduleTrigger from '@/components/molecules/DeleteScheduleTrigger/DeleteScheduleTrigger.tsx';
 import { GrTrigger } from 'react-icons/gr';
-import ButtonLink from '@/components/atoms/ButtonLink/ButtonLink.tsx';
 import ScheduleStatusBadge from '@/components/atoms/ScheduleStatusBadge/ScheduleStatusBadge.tsx';
+import DialogActionTrigger from '@/components/molecules/DialogActionTrigger/DialogActionTrigger.tsx';
 
 interface ScheduleCardListProps {
   schedules: Schedule[];
@@ -61,13 +61,17 @@ export default function ScheduleCardList(props: ScheduleCardListProps) {
                     value={schedule.id}
                     addon={
                       <Flex justify="space-between" align="center">
-                        <ButtonLink
+                        <DialogActionTrigger
                           variant="plain"
                           p={0}
-                          to={`/schedule/${schedule.id}`}
+                          onConfirm={() => Promise.resolve()}
+                          dialogData={{
+                            title: schedule.title,
+                            content: <p>Schedule Content</p>,
+                          }}
                         >
                           Open
-                        </ButtonLink>
+                        </DialogActionTrigger>
                         <HStack>
                           {schedule.isRecurring && (
                             <>

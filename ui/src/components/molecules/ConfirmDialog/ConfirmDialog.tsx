@@ -11,10 +11,11 @@ import {
 import { DialogActionTrigger } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import {
-  dialogClose$,
+  closeDialog$,
   dialogConfirm$,
   dialogOpen$,
   dialogReset$,
+  isDialogOpen$,
 } from '@/utils/modal.ts';
 import DialogData from '@/model/dialog-data.ts';
 
@@ -31,6 +32,10 @@ export default function ConfirmDialog() {
     dialogConfirm$.sink.next();
   };
 
+  useEffect(() => {
+    isDialogOpen$.sink.next(isOpen);
+  }, [isOpen]);
+
   const handleCancel = () => {
     if (dialogData?.isConfirmed) return;
     setIsOpen(false);
@@ -41,7 +46,7 @@ export default function ConfirmDialog() {
 
     const subs = [
       dialogReset$.source$.subscribe(() => setDialogData(null)),
-      dialogClose$.source$.subscribe(() => {
+      closeDialog$.source$.subscribe(() => {
         setIsOpen(false);
         timeoutId = window.setTimeout(() => {
           setDialogData(null);

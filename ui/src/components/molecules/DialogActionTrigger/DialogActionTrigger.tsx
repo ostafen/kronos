@@ -2,7 +2,7 @@ import { IconButtonProps } from '@chakra-ui/react';
 import { PropsWithChildren } from 'react';
 import { Button } from '@/components/chakra/button.tsx';
 import {
-  dialogClose$,
+  closeDialog$,
   dialogConfirm$,
   dialogOpen$,
   dialogReset$,
@@ -34,7 +34,7 @@ export default function DialogActionTrigger(
           confirmSub.unsubscribe();
         });
 
-        const cancelSub = dialogClose$.source$.subscribe(() => {
+        const cancelSub = closeDialog$.source$.subscribe(() => {
           reject({ status: 'canceled' });
           cancelSub.unsubscribe();
         });
@@ -47,7 +47,7 @@ export default function DialogActionTrigger(
         console.error(error.message);
       }
     } finally {
-      dialogClose$.sink.next();
+      closeDialog$.sink.next();
     }
   };
 
