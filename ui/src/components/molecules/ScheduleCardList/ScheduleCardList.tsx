@@ -9,19 +9,19 @@ import {
   GridItem,
   HStack,
 } from '@chakra-ui/react';
-import { LuPause, LuPlay, LuTrash2 } from 'react-icons/lu';
 import {
   ActionBarContent,
   ActionBarRoot,
   ActionBarSelectionTrigger,
   ActionBarSeparator,
 } from '@/components/chakra/action-bar.tsx';
-import { Button } from '@/components/chakra/button.tsx';
 import { useEffect, useMemo, useState } from 'react';
 import DeleteScheduleTrigger from '@/components/molecules/DeleteScheduleTrigger/DeleteScheduleTrigger.tsx';
-import { GrTrigger } from 'react-icons/gr';
 import ScheduleStatusBadge from '@/components/atoms/ScheduleStatusBadge/ScheduleStatusBadge.tsx';
 import DialogActionTrigger from '@/components/molecules/DialogActionTrigger/DialogActionTrigger.tsx';
+import ScheduleActionButton, {
+  ScheduleAction,
+} from '@/components/atoms/ScheduleActionButton/ScheduleActionButton.tsx';
 
 interface ScheduleCardListProps {
   schedules: Schedule[];
@@ -54,9 +54,25 @@ export default function ScheduleCardList(props: ScheduleCardListProps) {
   const isPauseButtonDisabled = checkedSchedules.some(
     (schedule) => !schedule.isRecurring || schedule.status === 'paused'
   );
+
   const isResumeButtonDisabled = checkedSchedules.some(
     (schedule) => !schedule.isRecurring || schedule.status === 'active'
   );
+
+  const scheduleActions: { action: ScheduleAction; isDisabled: boolean }[] = [
+    {
+      action: 'pause',
+      isDisabled: isPauseButtonDisabled,
+    },
+    {
+      action: 'resume',
+      isDisabled: isResumeButtonDisabled,
+    },
+    {
+      action: 'trigger',
+      isDisabled: false,
+    },
+  ];
 
   return (
     <>
@@ -132,22 +148,15 @@ export default function ScheduleCardList(props: ScheduleCardListProps) {
             variant="outline"
             size="sm"
             scheduleId={checkedSchedulesIds}
-          >
-            <LuTrash2 />
-            Delete
-          </DeleteScheduleTrigger>
-          <Button disabled={isPauseButtonDisabled} variant="outline" size="sm">
-            <LuPause />
-            Pause
-          </Button>
-          <Button disabled={isResumeButtonDisabled} variant="outline" size="sm">
-            <LuPlay />
-            Resume
-          </Button>
-          <Button variant="outline" size="sm">
-            <GrTrigger />
-            Trigger
-          </Button>
+          />
+          {scheduleActions.map(({ action, isDisabled }) => (
+            <ScheduleActionButton
+              key={action}
+              action={action}
+              scheduleId={checkedSchedulesIds}
+              disabled={isDisabled}
+            />
+          ))}
         </ActionBarContent>
       </ActionBarRoot>
     </>

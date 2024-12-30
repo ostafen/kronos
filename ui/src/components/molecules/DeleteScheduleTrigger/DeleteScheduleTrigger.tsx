@@ -1,9 +1,9 @@
-import { FaRegTrashCan } from 'react-icons/fa6';
 import { useQueryClient } from '@tanstack/react-query';
 import useDeleteSchedule from '@/hooks/use-delete-schedule.ts';
 import DialogActionTrigger from '@/components/molecules/DialogActionTrigger/DialogActionTrigger.tsx';
 import { PropsWithChildren } from 'react';
 import { IconButtonProps } from '@chakra-ui/react';
+import { LuTrash2 } from 'react-icons/lu';
 
 interface DeleteScheduleTriggerProps extends IconButtonProps {
   scheduleId: string | string[];
@@ -12,7 +12,7 @@ interface DeleteScheduleTriggerProps extends IconButtonProps {
 export default function DeleteScheduleTrigger(
   props: PropsWithChildren<DeleteScheduleTriggerProps>
 ) {
-  const { scheduleId, children, ...rest } = props;
+  const { scheduleId, ...rest } = props;
   const deleteSchedule = useDeleteSchedule();
   const queryClient = useQueryClient();
 
@@ -40,12 +40,8 @@ export default function DeleteScheduleTrigger(
       onConfirm={() => handleDeleteSchedule(scheduleId)}
       {...rest}
     >
-      {children || (
-        <>
-          <FaRegTrashCan />
-          Delete schedule
-        </>
-      )}
+      <LuTrash2 />
+      Delete
     </DialogActionTrigger>
   );
 }
