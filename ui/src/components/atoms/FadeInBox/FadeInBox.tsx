@@ -1,6 +1,6 @@
-import {Box, BoxProps, FlexProps} from "@chakra-ui/react";
-import {PropsWithChildren} from "react";
-import {keyframes} from "@emotion/react";
+import { Box, BoxProps, FlexProps } from '@chakra-ui/react';
+import { PropsWithChildren } from 'react';
+import { keyframes } from '@emotion/react';
 
 const fadeIn = keyframes`
     from {
@@ -17,14 +17,22 @@ const fadeIn = keyframes`
 `;
 
 interface FadeInBoxProps extends PropsWithChildren<BoxProps & FlexProps> {
-    isAnimationDisabled?: boolean;
+  isAnimationDisabled?: boolean;
 }
 
-export default function FadeInBox({children, isAnimationDisabled = false, ...props}: FadeInBoxProps) {
-    return (
-        <Box {...!isAnimationDisabled && {animation: `${fadeIn} ease-in-out 1s both`}}
-             {...props}>
-            {children}
-        </Box>
-    );
+export default function FadeInBox({
+  children,
+  isAnimationDisabled = false,
+  ...props
+}: FadeInBoxProps) {
+  return (
+    <Box
+      {...(!isAnimationDisabled && {
+        animation: `${fadeIn} ease-in-out 1s both`,
+      })}
+      {...props}
+    >
+      {children}
+    </Box>
+  );
 }

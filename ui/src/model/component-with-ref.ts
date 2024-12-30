@@ -1,4 +1,4 @@
-import { MutableRefObject } from "react";
+import { MutableRefObject } from 'react';
 
 type ComponentWithRef<TProps, TRef> = TProps & {
   ref: MutableRefObject<TRef>;

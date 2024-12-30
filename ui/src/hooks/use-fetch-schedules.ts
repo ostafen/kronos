@@ -1,9 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import Schedule from "@/model/schedule.ts";
+import { useQuery } from '@tanstack/react-query';
+import Schedule from '@/model/schedule.ts';
 
 export default function useFetchSchedules() {
   return useQuery({
-    queryKey: ["schedules"],
+    queryKey: ['schedules'],
     queryFn: fetchSchedules,
   });
 }

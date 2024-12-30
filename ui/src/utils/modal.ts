@@ -1,6 +1,5 @@
-import createSubject from "rx-subject";
-import DialogData from "@/model/dialog-data.ts";
-
+import createSubject from 'rx-subject';
+import DialogData from '@/model/dialog-data.ts';
 
 export const dialogClose$ = createSubject<void>();
 export const dialogConfirm$ = createSubject<void>();

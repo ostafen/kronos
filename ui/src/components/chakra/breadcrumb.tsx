@@ -13,7 +13,7 @@ export const BreadcrumbRoot = React.forwardRef<
   const { separator, separatorGap, children, ...rest } = props;
 
   const validChildren = React.Children.toArray(children).filter(
-    React.isValidElement,
+    React.isValidElement
   );
 
   return (

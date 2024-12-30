@@ -15,7 +15,7 @@ import {
   ActionBarRoot,
   ActionBarSelectionTrigger,
   ActionBarSeparator,
-} from '@/components/ui/action-bar.tsx';
+} from '@/components/chakra/action-bar.tsx';
 import { Button } from '@/components/chakra/button.tsx';
 import { useState } from 'react';
 import DeleteScheduleTrigger from '@/components/molecules/DeleteScheduleTrigger/DeleteScheduleTrigger.tsx';
