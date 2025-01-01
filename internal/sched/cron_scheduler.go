@@ -87,7 +87,10 @@ type item struct {
 
 func (i *item) Less(than btree.Item) bool {
 	other := than.(*item)
-	return i.id < other.id
+	if i.nextTickAt == other.nextTickAt {
+		return i.id < other.id
+	}
+	return i.nextTickAt < other.nextTickAt
 }
 
 func (s *cronScheduler) onTick() time.Time {
@@ -123,7 +126,20 @@ func (s *cronScheduler) Remove(id int64) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	s.index.Delete(&item{id: id})
+	// TODO: keep a mapping [id] -> item for O(log(n)) delete
 
+	var itemToDelete *item
+	s.index.Ascend(func(i btree.Item) bool {
+		it := i.(*item)
+		if it.id == id {
+			itemToDelete = it
+			return false
+		}
+		return true
+	})
+
+	if itemToDelete != nil {
+		s.index.Delete(itemToDelete)
+	}
 	return nil
 }
