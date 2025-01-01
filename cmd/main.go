@@ -41,9 +41,10 @@ func printLogo() {
 	fmt.Println("| |/ / '__/ _ \\| '_ \\ / _ \\/ __|")
 	fmt.Println("|   <| | | (_) | | | | (_) \\__ \\")
 	fmt.Println("|_|\\_\\_|  \\___/|_| |_|\\___/|___/")
+	fmt.Println()
 	fmt.Printf("Version: %s\n", getVersion())
 	fmt.Printf("Commit: %s\n", commit)
-	fmt.Printf("Build.Time: %s\n\n", buildTime)
+	fmt.Printf("Built At: %s\n\n", buildTime)
 }
 
 func main() {
@@ -66,16 +67,6 @@ func main() {
 		service.NewNotificationService(),
 	)
 	defer svc.Stop()
-
-	/*
-		svc.OnScheduleNotified(func(s *model.CronSchedule, code int) {
-			if code < 200 || code >= 300 {
-				metrics.IncScheduleFailures(s.ID)
-			} else {
-				metrics.ResetScheduleFailures(s.ID)
-			}
-			metrics.IncWebhookRequests(s.URL, code)
-		})*/
 
 	configureRouter(svc)
 

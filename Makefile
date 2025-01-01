@@ -8,9 +8,12 @@ BIN_FOLDER = ./bin
 EXEC_NAME = kronos
 TOOLS=./tools
 
-BUILD_TIME := $(shell date)
+BRANCH_NAME := $(shell git rev-parse --abbrev-ref HEAD)
+COMMIT_SHORT := $(shell git rev-parse --short HEAD)
 COMMIT := $(shell git rev-parse HEAD)
-VERSION ?= latest
+VERSION := $(shell git describe --tags --exact-match 2>/dev/null || echo $(BRANCH_NAME)-$(COMMIT_SHORT))
+
+BUILD_TIME := $(shell date)
 
 IMG_NAME ?= ghcr.io/ostafen/kronos
 IMG_TAG ?= latest
