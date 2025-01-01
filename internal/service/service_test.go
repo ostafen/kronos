@@ -134,7 +134,9 @@ func (s *mockCronRepo) Save(sched *model.CronSchedule) (int64, error) {
 }
 
 func (s *mockCronRepo) Delete(id int64) error {
-	panic("NOT IMPLEMENTED")
+	delete(s.m, id)
+
+	return nil
 }
 
 func (s *mockCronRepo) Iter(iterFunc func(*model.CronSchedule) error) error {
@@ -158,5 +160,13 @@ func (s *mockStore) CronScheduleRepository() store.CronScheduleRepository {
 }
 
 func (s *mockStore) HistoryRepository() store.CronHistoryRepository {
-	panic("NOT IMPLEMENTED")
+	return &mockHistoryRepo{}
+}
+
+type mockHistoryRepo struct {
+	store.CronHistoryRepository
+}
+
+func (r *mockHistoryRepo) Insert(status *model.CronStatus, maxSamplesPerCron int) error {
+	return nil
 }
