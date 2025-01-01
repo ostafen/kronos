@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -42,11 +43,11 @@ func (s *ScheduleServiceSuite) SetupTest() {
 }
 
 func (s *ScheduleServiceSuite) aSchedule(url string) *model.CronSchedule {
-	return &model.CronSchedule{
+	sched := &model.CronSchedule{
 		ID:          rand.Int63(),
 		Title:       "test-schedule",
 		Status:      model.ScheduleStatusActive,
-		CronExpr:    "0/1 * * * *",
+		CronExpr:    "* * * * * *",
 		URL:         url,
 		IsRecurring: true,
 		StartAt:     time.Now(),
@@ -54,6 +55,11 @@ func (s *ScheduleServiceSuite) aSchedule(url string) *model.CronSchedule {
 		CreatedAt:   time.Now(),
 		Failures:    0,
 	}
+
+	_, err := s.store.CronScheduleRepository().Save(sched)
+	s.NoError(err)
+	s.svc.Scheduler().Schedule(sched.ID, time.Now())
+	return sched
 }
 
 func (s *ScheduleServiceSuite) anListeningWebhookHandler(n int, ch chan struct{}) string {
@@ -79,18 +85,14 @@ func (s *ScheduleServiceSuite) anListeningWebhookHandler(n int, ch chan struct{}
 	return fmt.Sprintf("http://%s/webhook", server.Listener.Addr())
 }
 
-func (s *ScheduleServiceSuite) TestNotifySchedules() {
+func (s *ScheduleServiceSuite) TestSchedulesNotification() {
 	n := 1000
 
 	ch := make(chan struct{}, 1)
 
 	url := s.anListeningWebhookHandler(n, ch)
 	for i := 0; i < n; i++ {
-		sched := s.aSchedule(url)
-
-		_, err := s.store.CronScheduleRepository().Save(sched)
-		s.NoError(err)
-		s.svc.Scheduler().Schedule(sched.ID, time.Now())
+		s.aSchedule(url)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
@@ -104,6 +106,33 @@ func (s *ScheduleServiceSuite) TestNotifySchedules() {
 	case <-ch:
 	}
 	s.Equal(int(s.webhookHandlerCalls.Load()), n)
+}
+
+func (s *ScheduleServiceSuite) TestPauseResume() {
+	ch := make(chan struct{}, 1)
+	url := s.anListeningWebhookHandler(math.MaxInt, ch)
+
+	sched := s.aSchedule(url)
+
+	time.Sleep(time.Second + time.Second/10)
+
+	pausedSched, err := s.svc.PauseSchedule(sched.ID)
+	s.NoError(err)
+
+	s.Equal(pausedSched.Status, model.ScheduleStatusPaused)
+	pausedSched.Status = model.ScheduleStatusActive
+	s.Equal(sched, pausedSched)
+
+	calls := s.webhookHandlerCalls.Load()
+	s.GreaterOrEqual(calls, int32(1))
+
+	resumedSched, err := s.svc.ResumeSchedule(sched.ID)
+	s.NoError(err)
+	s.Equal(sched, resumedSched)
+
+	time.Sleep(time.Second + time.Second/10)
+
+	s.GreaterOrEqual(s.webhookHandlerCalls.Load(), calls)
 }
 
 type mockCronRepo struct {
@@ -120,16 +149,24 @@ func (s *mockCronRepo) Get(id int64) (*model.CronSchedule, error) {
 	if !has {
 		return nil, store.ErrScheduleNotExist
 	}
-	return sched, nil
+
+	var copy model.CronSchedule = *sched
+	return &copy, nil
 }
 
 func (s *mockCronRepo) Save(sched *model.CronSchedule) (int64, error) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	s.m[s.nextID] = sched
+	if _, has := s.m[sched.ID]; has {
+		return sched.ID, nil
+	}
+
 	sched.ID = s.nextID
 	s.nextID++
+
+	s.m[sched.ID] = sched
+
 	return sched.ID, nil
 }
 

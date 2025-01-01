@@ -10,18 +10,11 @@ import (
 	"github.com/google/btree"
 )
 
-func (s *cronScheduler) signal() {
-	select {
-	case s.signalCh <- struct{}{}:
-	default:
-	}
-}
+var MaxTime = time.Date(9999, 12, 31, 23, 59, 59, 999999999, time.UTC)
 
 func (s *cronScheduler) Start(ctx context.Context) {
 	go s.run(ctx)
 }
-
-var MaxTime = time.Date(9999, 12, 31, 23, 59, 59, 999999999, time.UTC)
 
 func (s *cronScheduler) run(ctx context.Context) {
 	duration := time.Duration(0)
@@ -40,15 +33,22 @@ func (s *cronScheduler) run(ctx context.Context) {
 			duration = time.Hour
 		}
 
-		log.WithField("nextTick", time.Now().Add(duration).Truncate(time.Second)).
+		log.WithField("nextTick", time.Now().Add(duration).Truncate(time.Millisecond)).
 			Info("scheduling next trigger")
+	}
+}
+
+func (s *cronScheduler) signal() {
+	select {
+	case s.signalCh <- struct{}{}:
+	default:
 	}
 }
 
 type CronScheduler interface {
 	Start(ctx context.Context)
 	Schedule(id int64, at time.Time)
-	Remove(id int64) error
+	Remove(id int64) bool
 }
 
 type cronScheduler struct {
@@ -72,7 +72,7 @@ func (s *cronScheduler) Schedule(id int64, at time.Time) {
 
 	s.index.ReplaceOrInsert(&item{
 		id:         id,
-		nextTickAt: at.Unix(),
+		nextTickAt: at.UnixMilli(),
 	})
 
 	s.mtx.Unlock()
@@ -94,7 +94,7 @@ func (i *item) Less(than btree.Item) bool {
 }
 
 func (s *cronScheduler) onTick() time.Time {
-	now := time.Now().Unix()
+	now := time.Now()
 
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -105,24 +105,24 @@ func (s *cronScheduler) onTick() time.Time {
 			return MaxTime
 		}
 
-		if it.nextTickAt > now {
-			return time.Unix(it.nextTickAt, 0)
+		if it.nextTickAt > now.UnixMilli() {
+			return time.UnixMilli(it.nextTickAt)
 		}
 
 		s.index.DeleteMin()
 
 		nextTick := s.onCronTick(it.id)
 
-		if nextTick.Unix() > now {
+		if nextTick.UnixMicro() > now.UnixMilli() {
 			s.index.ReplaceOrInsert(&item{
 				id:         it.id,
-				nextTickAt: nextTick.Unix(),
+				nextTickAt: nextTick.UnixMilli(),
 			})
 		}
 	}
 }
 
-func (s *cronScheduler) Remove(id int64) error {
+func (s *cronScheduler) Remove(id int64) bool {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -139,7 +139,8 @@ func (s *cronScheduler) Remove(id int64) error {
 	})
 
 	if itemToDelete != nil {
-		s.index.Delete(itemToDelete)
+		it := s.index.Delete(itemToDelete)
+		return it != nil
 	}
-	return nil
+	return false
 }

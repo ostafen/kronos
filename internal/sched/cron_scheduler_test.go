@@ -1,7 +1,9 @@
 package sched
 
 import (
+	"context"
 	"math/rand"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -76,4 +78,30 @@ func (s *CronSchedulerServiceSuite) TestOnTickReschedule() {
 		expectedNextTick = now.Add(time.Second)
 	}
 	s.Equal(expectedNextTick, nextTick)
+}
+
+func (s *CronSchedulerServiceSuite) TestRemove() {
+	frequency := time.Millisecond * 100
+
+	var nReschedules atomic.Uint64
+	scheduler := NewCronScheduler(func(id int64) time.Time {
+		nReschedules.Add(1)
+		return time.Now().Add(frequency)
+	})
+	scheduler.Start(context.Background())
+
+	id := rand.Int63()
+	scheduler.Schedule(id, time.Now())
+
+	time.Sleep(time.Second)
+
+	removed := scheduler.Remove(id)
+	s.True(removed)
+
+	nReschedulesBeforePause := nReschedules.Load()
+	s.GreaterOrEqual(nReschedulesBeforePause, uint64(1))
+
+	time.Sleep(time.Second)
+
+	s.Equal(nReschedules.Load(), nReschedulesBeforePause)
 }
