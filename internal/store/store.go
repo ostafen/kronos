@@ -146,19 +146,8 @@ func (s *cronScheduleRepo) Save(cron *model.CronSchedule) (int64, error) {
 		return -1, err
 	}
 
-	row := s.db.QueryRow(
-		fmt.Sprintf(
-			`INSERT INTO cron_schedules(%s) VALUES (%s)
-			ON CONFLICT (id) DO UPDATE
-			SET title = excluded.title, status = excluded.status, description = excluded.description,
-				cron_expr = excluded.cron_expr, url = excluded.url, metadata = excluded.metadata,
-				is_recurring = excluded.is_recurring, run_at = excluded.run_at, start_at = excluded.start_at,
-				end_at = excluded.end_at
-			RETURNING id;
-			`,
-			strings.Join(cronSchedulesCols[1:], ","),
-			strings.Join(cronSchedulesValues[:len(cronSchedulesValues)-1], ","),
-		),
+	values := []any{
+		cron.ID,
 		cron.Title,
 		cron.Status,
 		cron.Description,
@@ -170,6 +159,30 @@ func (s *cronScheduleRepo) Save(cron *model.CronSchedule) (int64, error) {
 		cron.RunAt,
 		cron.StartAt,
 		cron.EndAt,
+	}
+
+	cols := cronSchedulesCols
+	placeHolders := cronSchedulesValues
+	if cron.ID <= 0 {
+		cols = cols[1:]
+		values = values[1:]
+		placeHolders = placeHolders[:len(placeHolders)-1]
+	}
+
+	row := s.db.QueryRow(
+		fmt.Sprintf(
+			`INSERT INTO cron_schedules(%s) VALUES (%s)
+			ON CONFLICT (id) DO UPDATE
+			SET title = excluded.title, status = excluded.status, description = excluded.description,
+				cron_expr = excluded.cron_expr, url = excluded.url, metadata = excluded.metadata,
+				is_recurring = excluded.is_recurring, run_at = excluded.run_at, start_at = excluded.start_at,
+				end_at = excluded.end_at
+			RETURNING id;
+			`,
+			strings.Join(cols, ","),
+			strings.Join(placeHolders, ","),
+		),
+		values...,
 	)
 
 	var id int64

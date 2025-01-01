@@ -87,10 +87,7 @@ type item struct {
 
 func (i *item) Less(than btree.Item) bool {
 	other := than.(*item)
-	if i.nextTickAt == other.nextTickAt {
-		return i.id < other.id
-	}
-	return i.nextTickAt < other.nextTickAt
+	return i.id < other.id
 }
 
 func (s *cronScheduler) onTick() time.Time {
