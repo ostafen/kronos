@@ -11,8 +11,8 @@ import (
 	"github.com/ostafen/kronos/internal/config"
 	"github.com/ostafen/kronos/internal/service"
 	"github.com/ostafen/kronos/internal/store"
+	statichttp "github.com/ostafen/kronos/webbuild"
 
-  "github.com/ostafen/kronos/ui"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/rs/cors"
@@ -117,9 +117,8 @@ func getFormatter(format string) log.Formatter {
 }
 
 func configureRouter(svc service.ScheduleService) {
-  a := statichttp.Static
 	r := mux.NewRouter()
-  fs := http.FileServer(http.FS(a))
+	fs := http.FileServer(http.FS(statichttp.Static))
 	r.PathPrefix("/web").Handler(http.StripPrefix("/", fs))
 
 	handler := api.NewScheduleApiHandler(svc)
