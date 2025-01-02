@@ -21,7 +21,7 @@ const shinyBar = keyframes`
     }
 `;
 
-export default function ScheduleListPage() {
+export default function ScheduleList() {
   const schedules = useFetchSchedules();
 
   const sortedSchedules = useMemo(() => {

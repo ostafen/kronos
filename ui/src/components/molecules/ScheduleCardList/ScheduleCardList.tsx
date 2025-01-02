@@ -22,6 +22,7 @@ import DialogActionTrigger from '@/components/molecules/DialogActionTrigger/Dial
 import ScheduleActionButton, {
   ScheduleAction,
 } from '@/components/atoms/ScheduleActionButton/ScheduleActionButton.tsx';
+import ScheduleDetail from '@/components/molecules/ScheduleDetail/ScheduleDetail.tsx';
 
 interface ScheduleCardListProps {
   schedules: Schedule[];
@@ -110,11 +111,12 @@ export default function ScheduleCardList(props: ScheduleCardListProps) {
                           p={0}
                           onConfirm={() => Promise.resolve()}
                           dialogData={{
-                            title: schedule.title,
-                            content: <p>Schedule Content</p>,
+                            title: 'Details',
+                            hideFooterButtons: true,
+                            content: <ScheduleDetail {...schedule} />,
                           }}
                         >
-                          Open
+                          Show details
                         </DialogActionTrigger>
                         <HStack>
                           {schedule.isRecurring && (

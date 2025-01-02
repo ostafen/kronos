@@ -2,11 +2,11 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider } from './components/chakra/provider.tsx';
-import ScheduleListPage from './pages/ScheduleList.page.tsx';
 import ConfirmDialog from '@/components/molecules/ConfirmDialog/ConfirmDialog.tsx';
 import FadeInBox from '@/components/atoms/FadeInBox/FadeInBox.tsx';
 import { AppContextProvider } from '@/context/App.context.tsx';
 import { Container } from '@chakra-ui/react';
+import ScheduleList from '@/components/organisms/ScheduleList.tsx';
 
 const queryClient = new QueryClient();
 
@@ -28,7 +28,7 @@ createRoot(document.getElementById('root')!).render(
               />
 
               <Container fluid pb="10">
-                <ScheduleListPage />
+                <ScheduleList />
               </Container>
 
               <ConfirmDialog />

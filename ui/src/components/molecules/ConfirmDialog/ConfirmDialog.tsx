@@ -73,12 +73,14 @@ export default function ConfirmDialog() {
           <DialogTitle>{dialogData?.title}</DialogTitle>
         </DialogHeader>
         <DialogBody>{dialogData?.content}</DialogBody>
-        <DialogFooter>
-          <DialogActionTrigger asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogActionTrigger>
-          <Button onClick={handleConfirm}>Confirm</Button>
-        </DialogFooter>
+        {!dialogData?.hideFooterButtons && (
+          <DialogFooter>
+            <DialogActionTrigger asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogActionTrigger>
+            <Button onClick={handleConfirm}>Confirm</Button>
+          </DialogFooter>
+        )}
         <DialogCloseTrigger />
       </DialogContent>
     </DialogRoot>
