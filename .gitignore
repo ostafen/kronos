@@ -3,3 +3,5 @@ node_modules
 data/kronos.bolt
 bin
 *.sqlite
+.idea/
+.husky/
