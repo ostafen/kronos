@@ -6,55 +6,80 @@ import (
 	"time"
 
 	"github.com/ostafen/kronos/internal/model"
+	"github.com/ostafen/kronos/internal/sched"
 	"github.com/ostafen/kronos/internal/store"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type ScheduleService interface {
-	RegisterSchedule(sched *model.ScheduleRegisterInput) (*model.Schedule, error)
-	GetSchedule(id string) (*model.Schedule, error)
-	DeleteSchedule(id string) error
-	IterSchedules(onSchedule func(*model.Schedule) error) error
+	RegisterSchedule(sched *model.ScheduleRegisterInput) (*model.CronSchedule, error)
+	GetSchedule(id int64) (*model.CronSchedule, error)
+	DeleteSchedule(id int64) error
+	IterSchedules(onSchedule func(*model.CronSchedule) error) error
+	GetHistory() ([]*model.CronStatus, error)
+	GetCronHistory(cronID int64) ([]*model.CronStatus, error)
 
-	OnTick(schedID string) time.Time
-	PauseSchedule(id string) (*model.Schedule, error)
-	ResumeSchedule(id string) (*model.Schedule, error)
-	TriggerSchedule(id string) (*model.Schedule, error)
+	PauseSchedule(id int64) (*model.CronSchedule, error)
+	ResumeSchedule(id int64) (*model.CronSchedule, error)
+	TriggerSchedule(id int64) (*model.CronSchedule, error)
 
-	OnScheduleResumed(cbk ...ScheduleCallback)
-	OnScheduleRegistered(cbk ...ScheduleCallback)
-	OnSchedulePaused(cbk ...ScheduleCallback)
-	OnScheduleNotified(cbk ...ScheduleNotificationCallback)
+	Scheduler() sched.CronScheduler
+	Stop()
 }
 
-func NewScheduleService(store store.ScheduleStore, svc NotificationService) ScheduleService {
-	return &schedService{
-		store:           store,
-		notificationSvc: svc,
+func NewScheduleService(
+	store store.Store,
+	notificationSvc NotificationService,
+) ScheduleService {
+	svc := &schedService{
+		cronRepo:        store.CronScheduleRepository(),
+		statusRepo:      store.HistoryRepository(),
+		notificationSvc: notificationSvc,
 	}
+	svc.scheduler = sched.NewCronScheduler(svc.OnTick)
+
+	err := svc.cronRepo.Iter(func(sched *model.CronSchedule) error {
+		if sched.IsActive() {
+			log.Infof("scheduling %d at %s", sched.ID, sched.NextTick())
+
+			svc.scheduler.Schedule(sched.ID, sched.NextTick())
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	svc.cancel = cancel
+
+	svc.scheduler.Start(ctx)
+	return svc
 }
+
+const MaxSamplesPerCronDefault = 100
 
 type schedService struct {
 	notificationSvc NotificationService
 
-	store                store.ScheduleStore
-	onScheduleRegistered []ScheduleCallback
-	onScheduleResumed    []ScheduleCallback
-	onSchedulePaused     []ScheduleCallback
-	onScheduleNotified   []ScheduleNotificationCallback
+	scheduler  sched.CronScheduler
+	cronRepo   store.CronScheduleRepository
+	statusRepo store.CronHistoryRepository
+	cancel     context.CancelFunc
 }
 
-func (s *schedService) RegisterSchedule(input *model.ScheduleRegisterInput) (*model.Schedule, error) {
+func (s *schedService) RegisterSchedule(input *model.ScheduleRegisterInput) (*model.CronSchedule, error) {
 	sched, err := input.ToSched()
 	if err != nil {
 		return nil, err
 	}
 
-	err = s.store.InsertOrUpdate(sched)
+	id, err := s.cronRepo.Save(sched)
 	if err == nil {
-		s.runCallbacks(sched, s.onScheduleRegistered)
+		s.scheduler.Schedule(id, sched.NextTick())
 	}
+	sched.ID = id
 	return sched, err
 }
 
@@ -62,129 +87,129 @@ const (
 	MaxRequestDuration = time.Second * 5
 )
 
-func (s *schedService) OnTick(schedID string) time.Time {
-	sched, err := s.store.Get(schedID)
-	if errors.Is(err, store.ErrNotPresent) {
-		log.Errorf("no schedule with id %s", schedID)
+func (s *schedService) OnTick(cronID int64) time.Time {
+	cron, err := s.cronRepo.Get(cronID)
+	if errors.Is(err, store.ErrScheduleNotExist) {
+		log.Errorf("no schedule with id %d", cronID)
 		return time.Time{}
 	}
 
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	go s.sendWebhookNotification(sched)
-
-	if sched.Expired() {
+		log.Error(err)
 		return time.Time{}
 	}
-	return sched.NextTickAt()
+
+	go func() {
+		start := time.Now().Truncate(time.Second)
+		status, _ := s.sendWebhookNotification(cron)
+
+		duration := time.Since(start)
+		err := s.statusRepo.Insert(&model.CronStatus{
+			CronID:     cronID,
+			At:         start,
+			StatusCode: status,
+			Duration:   duration,
+		}, MaxSamplesPerCronDefault)
+
+		if err != nil {
+			log.Error(err)
+		}
+	}()
+
+	if cron.Expired() {
+		return time.Time{}
+	}
+	return cron.NextTick()
 }
 
-func (s *schedService) sendWebhookNotification(sched *model.Schedule) error {
+func (s *schedService) sendWebhookNotification(sched *model.CronSchedule) (int, error) {
 	log.WithField("scheduleId", sched.ID).
 		WithField("url", sched.URL).
 		Info("sendingNotification")
 
 	ctx, cancel := context.WithTimeout(context.Background(), MaxRequestDuration)
 	defer cancel()
-	code, err := s.notificationSvc.Send(ctx, sched.URL, sched)
-	if err == nil {
-		s.runNotificationCallbacks(sched, code)
-	}
-	return err
+	return s.notificationSvc.Send(ctx, sched.URL, sched)
 }
 
-func (s *schedService) runNotificationCallbacks(sched *model.Schedule, code int) {
-	for _, cbk := range s.onScheduleNotified {
-		cbk(sched, code)
-	}
-}
-
-func (s *schedService) GetSchedule(id string) (*model.Schedule, error) {
-	sched, err := s.store.Get(id)
+func (s *schedService) GetSchedule(id int64) (*model.CronSchedule, error) {
+	sched, err := s.cronRepo.Get(id)
 	if err != nil {
 		return nil, err
 	}
 	return sched, nil
 }
 
-func (s *schedService) DeleteSchedule(id string) error {
-	return s.store.Delete(id)
+func (s *schedService) DeleteSchedule(id int64) error {
+	return s.cronRepo.Delete(id)
 }
 
-func (s *schedService) IterSchedules(onSched func(*model.Schedule) error) error {
-	return s.store.Iterate(onSched)
+func (s *schedService) IterSchedules(onSched func(*model.CronSchedule) error) error {
+	return s.cronRepo.Iter(onSched)
 }
 
-func (s *schedService) runCallbacks(sched *model.Schedule, callbacks []ScheduleCallback) {
-	for _, cbk := range callbacks {
-		cbk(sched)
-	}
-}
-
-func (s *schedService) PauseSchedule(id string) (*model.Schedule, error) {
+func (s *schedService) PauseSchedule(id int64) (*model.CronSchedule, error) {
 	log.WithField("scheduleId", id).Info("pausing schedule")
 
-	sched, err := s.store.Get(id)
+	sched, err := s.cronRepo.Get(id)
 	if err != nil {
 		return nil, err
 	}
 
 	sched.Status = model.ScheduleStatusPaused
-	if err := s.store.InsertOrUpdate(sched); err != nil {
+	if _, err := s.cronRepo.Save(sched); err != nil {
 		return nil, err
 	}
 
-	s.runCallbacks(sched, s.onSchedulePaused)
+	s.scheduler.Remove(sched.ID)
+
 	return sched, nil
 }
 
-func (s *schedService) TriggerSchedule(id string) (*model.Schedule, error) {
-	sched, err := s.store.Get(id)
+func (s *schedService) TriggerSchedule(id int64) (*model.CronSchedule, error) {
+	sched, err := s.cronRepo.Get(id)
 	if err != nil {
 		return nil, err
 	}
 
-	err = s.sendWebhookNotification(sched)
+	_, err = s.sendWebhookNotification(sched)
 	return sched, err
 }
 
-func (s *schedService) ResumeSchedule(id string) (*model.Schedule, error) {
-	sched, err := s.store.Get(id)
+func (s *schedService) ResumeSchedule(id int64) (*model.CronSchedule, error) {
+	sched, err := s.cronRepo.Get(id)
 	if err != nil {
 		return nil, err
 	}
 
 	sched.Status = model.ScheduleStatusActive
-	if err := s.store.InsertOrUpdate(sched); err != nil {
+	if _, err := s.cronRepo.Save(sched); err != nil {
 		return nil, err
 	}
 
 	log.WithField("scheduleId", sched.ID).
-		WithField("nextScheduleAt", sched.NextTickAt()).
+		WithField("nextScheduleAt", sched.NextTick()).
 		Info("resuming schedule")
 
-	s.runCallbacks(sched, s.onScheduleResumed)
+	s.scheduler.Schedule(sched.ID, sched.NextTick())
+
 	return sched, nil
 }
 
-type ScheduleCallback func(*model.Schedule)
-
-func (s *schedService) OnScheduleResumed(callbacks ...ScheduleCallback) {
-	s.onScheduleResumed = append(s.onScheduleResumed, callbacks...)
+func (s *schedService) GetCronHistory(cronID int64) ([]*model.CronStatus, error) {
+	return s.statusRepo.GetCronHistory(cronID, MaxSamplesPerCronDefault)
 }
 
-func (s *schedService) OnScheduleRegistered(callbacks ...ScheduleCallback) {
-	s.onScheduleRegistered = append(s.onScheduleRegistered, callbacks...)
+func (s *schedService) GetHistory() ([]*model.CronStatus, error) {
+	return s.statusRepo.GetHistory(MaxSamplesPerCronDefault)
 }
 
-func (s *schedService) OnSchedulePaused(callbacks ...ScheduleCallback) {
-	s.onSchedulePaused = append(s.onSchedulePaused, callbacks...)
+func (s *schedService) Scheduler() sched.CronScheduler {
+	return s.scheduler
 }
 
-type ScheduleNotificationCallback func(*model.Schedule, int)
-
-func (s *schedService) OnScheduleNotified(callbacks ...ScheduleNotificationCallback) {
-	s.onScheduleNotified = append(s.onScheduleNotified, callbacks...)
+func (s *schedService) Stop() {
+	if s.cancel != nil {
+		s.cancel()
+	}
 }

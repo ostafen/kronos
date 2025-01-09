@@ -29,13 +29,12 @@ func (s *httpNotificationService) Send(ctx context.Context, url string, payload 
 		return -1, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data)) // TODO: add support for other types of methods
 	if err != nil {
 		return -1, err
 	}
 
-	client := http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return http.StatusServiceUnavailable, err
 	}

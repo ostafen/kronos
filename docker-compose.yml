@@ -1,0 +1,10 @@
+services:
+  kronos:
+    image: ghcr.io/ostafen/kronos
+    ports:
+      - '9175:9175'
+    environment:
+      - PORT=9175 # configuration properties can be overridden through environment variables
+      - STORE_PATH=/data/kronos.bolt
+    volumes:
+      - ./data:/data
