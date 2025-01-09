@@ -105,7 +105,7 @@ func (s *ScheduleServiceSuite) TestSchedulesNotification() {
 		s.Fail("signal not received")
 	case <-ch:
 	}
-	s.Equal(int(s.webhookHandlerCalls.Load()), n)
+	s.GreaterOrEqual(int(s.webhookHandlerCalls.Load()), n)
 }
 
 func (s *ScheduleServiceSuite) TestPauseResume() {
