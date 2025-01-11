@@ -5,3 +5,5 @@ bin
 *.sqlite
 .idea/
 .husky/
+webbuild/web/*
+!webbuild/web/index.html
