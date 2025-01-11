@@ -14,6 +14,9 @@
 
 - :alarm_clock: Flexible Scheduling: Create complex scheduling patterns with cron expressions.
 
+![Screen](docs/images/screen.png)
+
+
 ## Build (Go 1.9+)
 
 Run the following command
