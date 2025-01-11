@@ -7,6 +7,5 @@ export default defineConfig({
   build: {
     outDir: 'web',
   },
-  base: '/web/',
   plugins: [react(), tsconfigPaths()],
 });
