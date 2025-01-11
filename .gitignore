@@ -4,4 +4,3 @@ data/kronos.bolt
 bin
 *.sqlite
 .idea/
-.husky/
