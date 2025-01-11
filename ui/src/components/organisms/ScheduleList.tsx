@@ -34,7 +34,8 @@ export default function ScheduleList() {
 
   const { state, dispatch } = useContext(AppContext);
   const noSchedules = !schedules.isFetching && !schedules.data?.length;
-  const isAnimationDisabled = state.animationStatus === 'played';
+  const isAnimationDisabled =
+    !noSchedules || state.animationStatus === 'played';
 
   const handleSeed = async () => {
     try {

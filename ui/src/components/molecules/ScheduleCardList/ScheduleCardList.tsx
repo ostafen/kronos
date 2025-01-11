@@ -8,6 +8,7 @@ import {
   Grid,
   GridItem,
   HStack,
+  VisuallyHidden,
 } from '@chakra-ui/react';
 import {
   ActionBarContent,
@@ -23,6 +24,7 @@ import ScheduleActionButton, {
   ScheduleAction,
 } from '@/components/atoms/ScheduleActionButton/ScheduleActionButton.tsx';
 import ScheduleDetail from '@/components/molecules/ScheduleDetail/ScheduleDetail.tsx';
+import ToggleAllCheckbox from '@/components/atoms/ToggleAllCheckbox/ToggleAllCheckbox.tsx';
 
 interface ScheduleCardListProps {
   schedules: Schedule[];
@@ -84,8 +86,19 @@ export default function ScheduleCardList(props: ScheduleCardListProps) {
             onValueChange={(schedules) => setCheckedSchedulesIds(schedules)}
           >
             <Fieldset.Legend textAlign="left" fontSize="sm" mb="2">
-              Schedules
+              <VisuallyHidden>Schedules</VisuallyHidden>
             </Fieldset.Legend>
+
+            <ToggleAllCheckbox
+              mb={3}
+              checkedItems={checkedSchedulesIds}
+              allItems={schedules}
+              onResetCheckedItems={() => setCheckedSchedulesIds([])}
+              onCheckAllItems={() =>
+                setCheckedSchedulesIds(schedules.map((s) => s.id))
+              }
+            />
+
             <Grid
               templateColumns={{
                 base: '1fr',
